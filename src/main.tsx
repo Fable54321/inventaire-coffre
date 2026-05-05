@@ -5,6 +5,7 @@ import App from './100--App/App'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ToolBoxesProvider } from './Contexts/ToolBoxesContext/ToolBoxesContextProvider'
 import ToolBoxesList from './110--ToolBoxesList/ToolBoxesList'
+import ToolboxDetail from './120--ToolboxDetail/ToolboxDetail'
 
 const router = createBrowserRouter([
   {
@@ -14,6 +15,10 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <ToolBoxesList />,
+      },
+      {
+        path: "toolbox/:toolboxId",
+        element: <ToolboxDetail />,
       },
     ]
   },

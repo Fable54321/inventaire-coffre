@@ -42,7 +42,7 @@ export async function fetchWithAuth<T>(
   options: FetchWithAuthOptions = {},
 ): Promise<T> {
   if (sessionExpired) {
-    throw new Error("Session expirée, veuillez vous reconnecter.");
+    throw new Error("Sesión expirada, por favor reconéctese.");
   }
 
   const url = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
@@ -86,9 +86,9 @@ export async function fetchWithAuth<T>(
     const refreshed = await refreshOnce();
 
     if (!refreshed) {
-      alert("veuillez vous reconnecter.")
+      alert("Por favor reconéctese.")
       window.location.replace("https://vegibec-portail.com/");
-      throw new Error("Session expirée, veuillez vous reconnecter.");
+      throw new Error("Sesión expirada, por favor reconéctese.");
     }
 
     response = await makeRequest();
@@ -117,15 +117,15 @@ export async function fetchWithAuth<T>(
         status: response.status,
         message: errorMessage,
       });
-      alert(`Accès refusé pour ${requestMethod} ${requestRoute}.\n${errorMessage}`);
+      alert(`Acceso denegado para ${requestMethod} ${requestRoute}.\n${errorMessage}`);
       window.location.replace("https://vegibec-portail.com/");
       throw new Error(
-        `Accès refusé : vous n'avez pas les permissions nécessaires. (${requestMethod} ${requestRoute})`,
+        `Acceso denegado : no tiene los permisos necesarios. (${requestMethod} ${requestRoute})`,
       );
     }
 
     if (response.status === 500) {
-      errorMessage = `Erreur serveur, veuillez réessayer plus tard. (${requestMethod} ${requestRoute})`;
+      errorMessage = `Error del servidor, por favor inténtelo de nuevo más tarde. (${requestMethod} ${requestRoute})`;
     }
 
     throw new Error(errorMessage);

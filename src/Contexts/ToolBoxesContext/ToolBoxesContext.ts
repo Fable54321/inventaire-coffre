@@ -1,16 +1,50 @@
 import { createContext } from 'react';
 
 export interface ToolBox {
-  // Define the structure of a toolbox if known, otherwise use any
-  id: string;
+  id: number;
   name: string;
   code: string;
-  // Add other properties as needed
+}
+
+export interface ToolboxInventoryItem {
+  toolbox_id: number;
+  toolbox_code: string;
+  toolbox_name: string;
+  section_id: number;
+  section_name: string;
+  section_type: string | null;
+  section_order: number;
+  group_id: number | null;
+  group_name: string | null;
+  group_order: number | null;
+  item_id: number;
+  raw_description: string;
+  expected_quantity: number | null;
+  actual_quantity: number | null;
+  status: string | null;
+  status_note: string | null;
+  item_order: number;
+  tool_variant_id: number | null;
+  variant_name: string | null;
+  spanish_description: string | null;
+  french_description: string | null;
+  drive_size: string | null;
+  measurement: string | null;
+  length_type: string | null;
+  impact: string | null;
+  brand: string | null;
+  tool_id: number | null;
+  tool_spanish_name: string | null;
+  tool_french_name: string | null;
 }
 
 export interface ToolBoxesContextType {
   toolBoxes: ToolBox[];
+  toolboxItems: ToolboxInventoryItem[];
+  toolboxItemsLoading: boolean;
+  toolboxItemsError: string | null;
   fetchToolBoxes: () => Promise<void>;
+  fetchToolboxItems: (toolboxId: number) => Promise<void>;
   loading: boolean;
   error: string | null;
 }
