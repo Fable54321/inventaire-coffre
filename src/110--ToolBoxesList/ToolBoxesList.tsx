@@ -7,6 +7,22 @@ const ToolBoxesList = () => {
 
   const { toolBoxes, loading, error } = useToolBoxes();
 
+
+  type SortMap = Record<string, number>;
+
+  const sortMap : SortMap = {
+    "Caja: 26-11": 1,
+    "Caja: 26-12": 2,
+    "Caja: 26-13": 3,
+    "Caja: 26-14": 4,
+    "Caja: 26-19": 5,
+    "Caja: 26-20": 6,
+  }
+
+  
+
+  console.log(typeof sortMap["Caja: 26-11"], typeof sortMap["Caja: 26-12"]);
+
   
   return (
     <div className="w-full ">
@@ -19,7 +35,13 @@ const ToolBoxesList = () => {
       {loading && <p>Cargando...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       <ul className="flex flex-col gap-2 mt-5 w-[min(750px,99%)] mx-auto">
-        {toolBoxes.map((toolbox) => (
+        {toolBoxes
+        .sort((a, b) => {
+          const nameA = `Caja: ${a.code}`;
+          const nameB = `Caja: ${b.code}`;
+          return (sortMap[nameA] ?? 999) - (sortMap[nameB] ?? 999);
+        })
+        .map((toolbox) => (
           <li key={toolbox.id} className="">
             <Link to={`/toolbox/${toolbox.id}`} className="flex gap-10 items-center bg-[#f4fdf1] rounded-lg p-4 relative" style={{ boxShadow: "-2px 2px 24px 0px rgba(0,0,0,0.4)" }}>
               <div className="p-1 px-2 rounded-lg bg-primary">

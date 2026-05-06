@@ -106,14 +106,15 @@ const ToolboxDetail = () => {
         <p>No se encontraron artículos para esta caja.</p>
       )}
 
-      {Object.entries(groupedItems).map(([sectionKey, section]) => {
+      {!toolboxItemsLoading && !toolboxItemsError &&  Object.entries(groupedItems).map(([sectionKey, section]) => {
         const sectionOpen = openSections.has(sectionKey);
         return (
           <div key={sectionKey} className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm">
             <button
               type="button"
               onClick={() => toggleSection(sectionKey)}
-              className="flex w-full items-center justify-between rounded-t-lg bg-slate-100 px-4 py-3 text-left font-semibold"
+              className="flex w-full items-center justify-between rounded-t-lg bg-[#f4fdf1] px-4 py-3 text-left font-semibold"
+              style={{ boxShadow: "-0px -2px 24px 0px rgba(0,0,0,0.2)" }}
             >
               <div>
                 <p>Sección: {section.sectionName}</p>
@@ -123,11 +124,11 @@ const ToolboxDetail = () => {
             </button>
 
             {sectionOpen && (
-              <div className="space-y-3 p-4">
+              <div className="space-y-3 p-4 rounded-b-lg" style={{ boxShadow: "0px 12px 24px 0px rgba(0,0,0,0.1)" }}>
                 {Object.entries(section.groups).map(([groupKey, group]) => {
                   const groupOpen = openGroups.has(groupKey);
                   return (
-                    <div key={groupKey} className="rounded-lg border border-slate-200 bg-slate-50">
+                    <div key={groupKey} className="rounded-lg border border-slate-200 bg-tertiary " >
                       <button
                         type="button"
                         onClick={() => toggleGroup(groupKey)}
