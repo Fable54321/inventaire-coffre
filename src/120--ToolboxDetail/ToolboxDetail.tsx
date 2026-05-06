@@ -10,11 +10,15 @@ const ToolboxDetail = () => {
     toolboxItemsLoading,
     toolboxItemsError,
     fetchToolboxItems,
+    updateToolboxItem,
   } = useToolBoxes();
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
-  const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
+  const checkedItems = useMemo(
+    () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
+    [toolboxItems],
+  );
 
   useEffect(() => {
     if (!toolboxId) return;
@@ -26,16 +30,23 @@ const ToolboxDetail = () => {
     }
   }, [toolboxId, fetchToolboxItems]);
 
-  const toggleItemChecked = (itemId: number) => {
-    setCheckedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(itemId)) {
-        next.delete(itemId);
-      } else {
-        next.add(itemId);
-      }
-      return next;
-    });
+  const toggleItemChecked = async (itemId: number) => {
+    if (!toolboxId) return;
+    const toolboxItem = toolboxItems.find((item) => item.item_id === itemId);
+    if (!toolboxItem) return;
+
+    const nextChecked = !checkedItems.has(itemId);
+
+    try {
+      await updateToolboxItem(Number(toolboxId), itemId, {
+        actual_quantity: toolboxItem.actual_quantity,
+        status: toolboxItem.status,
+        status_note: toolboxItem.status_note,
+        is_checked: nextChecked,
+      });
+    } catch (error) {
+      console.error('Error updating item checked state:', error);
+    }
   };
 
 
@@ -136,7 +147,7 @@ const ToolboxDetail = () => {
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
         </div>
-        <Link to="/" className="button-generic text-base">
+        <Link to="/" className="bg-green-600 text-white">
           Volver a la lista
         </Link>
       </div>
@@ -209,7 +220,7 @@ const ToolboxDetail = () => {
                                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                                     <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
                                     <p>Cantidad real: {item.actual_quantity ?? "-"}</p>
-                                    <p>Id: {item.group_id ?? "-"}</p>
+                                    
                                     <p>Estado: {item.status ?? "-"}</p>
                                     {item.status_note && <p>Nota: {item.status_note}</p>}
                                   </div>

@@ -23,6 +23,7 @@ export interface ToolboxInventoryItem {
   actual_quantity: number | null;
   status: string | null;
   status_note: string | null;
+  is_checked: boolean | null;
   item_order: number;
   tool_variant_id: number | null;
   variant_name: string | null;
@@ -36,7 +37,6 @@ export interface ToolboxInventoryItem {
   tool_id: number | null;
   tool_spanish_name: string | null;
   tool_french_name: string | null;
-  is_checked: boolean;
 }
 
 export interface ToolBoxesContextType {
@@ -46,6 +46,16 @@ export interface ToolBoxesContextType {
   toolboxItemsError: string | null;
   fetchToolBoxes: () => Promise<void>;
   fetchToolboxItems: (toolboxId: number) => Promise<void>;
+  updateToolboxItem: (
+    toolboxId: number,
+    itemId: number,
+    update: {
+      actual_quantity?: number | null;
+      status?: string | null;
+      status_note?: string | null;
+      is_checked?: boolean | null;
+    },
+  ) => Promise<void>;
   loading: boolean;
   error: string | null;
 }

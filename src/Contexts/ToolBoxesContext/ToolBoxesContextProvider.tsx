@@ -58,6 +58,31 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
     void loadToolBoxes();
   }, [fetchToolBoxes]);
 
+  const updateToolboxItem = useCallback(
+    async (
+      toolboxId: number,
+      itemId: number,
+      update: {
+        actual_quantity?: number | null;
+        status?: string | null;
+        status_note?: string | null;
+        is_checked?: boolean | null;
+      },
+    ) => {
+      await fetchWithAuth(`/toolboxes/${toolboxId}/items/${itemId}`, {
+        method: 'PATCH',
+        body: update,
+      });
+
+      setToolboxItems((prev) =>
+        prev.map((item) =>
+          item.item_id === itemId ? { ...item, ...update } : item,
+        ),
+      );
+    },
+    [],
+  );
+
   const value: ToolBoxesContextType = {
     toolBoxes,
     toolboxItems,
@@ -65,6 +90,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
     toolboxItemsError,
     fetchToolBoxes,
     fetchToolboxItems,
+    updateToolboxItem,
     loading,
     error,
   };
