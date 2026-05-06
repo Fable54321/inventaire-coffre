@@ -39,17 +39,11 @@ const ToolboxDetail = () => {
   };
 
 
-  // useEffect(() => {
-  //   console.log("Toolbox items updated:", toolboxItems);
-  // },[toolboxItems])
-
-  const sections = useMemo(() => {
-    return new Set(toolboxItems.map((item) => `${item.section_name}`));
-  }, [toolboxItems]);
-
   useEffect(() => {
-    console.log("Sections updated:", sections, typeof sections);
-  },[sections])
+    console.log("Toolbox items updated:", toolboxItems);
+  },[toolboxItems])
+
+ 
 
   const selectedToolbox = toolboxId
     ? toolBoxes.find((toolbox) => toolbox.id === Number(toolboxId))

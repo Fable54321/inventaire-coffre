@@ -36,6 +36,7 @@ export interface ToolboxInventoryItem {
   tool_id: number | null;
   tool_spanish_name: string | null;
   tool_french_name: string | null;
+  is_checked: boolean;
 }
 
 export interface ToolBoxesContextType {
