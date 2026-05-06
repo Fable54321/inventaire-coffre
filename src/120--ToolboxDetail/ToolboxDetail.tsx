@@ -14,6 +14,7 @@ const ToolboxDetail = () => {
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const [checkedItems, setCheckedItems] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!toolboxId) return;
@@ -24,6 +25,31 @@ const ToolboxDetail = () => {
       });
     }
   }, [toolboxId, fetchToolboxItems]);
+
+  const toggleItemChecked = (itemId: number) => {
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
+
+  // useEffect(() => {
+  //   console.log("Toolbox items updated:", toolboxItems);
+  // },[toolboxItems])
+
+  const sections = useMemo(() => {
+    return new Set(toolboxItems.map((item) => `${item.section_name}`));
+  }, [toolboxItems]);
+
+  useEffect(() => {
+    console.log("Sections updated:", sections, typeof sections);
+  },[sections])
 
   const selectedToolbox = toolboxId
     ? toolBoxes.find((toolbox) => toolbox.id === Number(toolboxId))
@@ -62,6 +88,24 @@ const ToolboxDetail = () => {
     >);
   }, [toolboxItems]);
 
+  const isGroupComplete = (groupItems: typeof toolboxItems[number][]) =>
+    groupItems.every((item) => checkedItems.has(item.item_id));
+
+  const isSectionComplete = (section: typeof groupedItems[string]) =>
+    Object.values(section.groups).every((group) =>
+      group.items.every((item) => checkedItems.has(item.item_id))
+    );
+
+  const allSectionsComplete = useMemo(
+    () =>
+      Object.values(groupedItems).every((section) =>
+        Object.values(section.groups).every((group) =>
+          group.items.every((item) => checkedItems.has(item.item_id))
+        )
+      ),
+    [groupedItems, checkedItems]
+  );
+
   const toggleSection = (sectionKey: string) => {
     setOpenSections((prev) => {
       const next = new Set(prev);
@@ -94,6 +138,9 @@ const ToolboxDetail = () => {
             {selectedToolbox ? `Caja ${selectedToolbox.code}` : "Detalles de la caja"}
           </h2>
           {selectedToolbox && <p className="text-sm text-muted">Usado por : {selectedToolbox.name}</p>}
+          <p className="mt-2 text-sm text-slate-600">
+            {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
+          </p>
         </div>
         <Link to="/" className="button-generic text-base">
           Volver a la lista
@@ -108,47 +155,73 @@ const ToolboxDetail = () => {
 
       {!toolboxItemsLoading && !toolboxItemsError &&  Object.entries(groupedItems).map(([sectionKey, section]) => {
         const sectionOpen = openSections.has(sectionKey);
+        const sectionComplete = isSectionComplete(section);
         return (
-          <div key={sectionKey} className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div key={sectionKey} className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm"> 
             <button
               type="button"
               onClick={() => toggleSection(sectionKey)}
-              className="flex w-full items-center justify-between rounded-t-lg bg-[#f4fdf1] px-4 py-3 text-left font-semibold"
+              className="flex w-full relative items-center justify-between rounded-t-lg bg-[#f4fdf1] px-4 py-3 text-left font-semibold"
               style={{ boxShadow: "-0px -2px 24px 0px rgba(0,0,0,0.2)" }}
             >
-              <div>
-                <p>Sección: {section.sectionName}</p>
+              <div className="relative flex justify-between w-full">
+                <div className="flex flex-col gap-2">
+                <p className="flex items-center gap-4">
+                  <span>Sección: {section.sectionName}</span>
+                  
+                </p>
                 {section.sectionType && <p className="text-sm text-muted">Tipo: {section.sectionType}</p>}
+                </div>
+                {sectionComplete && <span className="text-green-600 text-[2em] ml-10 mr-auto ">✓</span>}
+                
               </div>
               <span className="text-2xl">{sectionOpen ? "−" : "+"}</span>
+              
             </button>
 
             {sectionOpen && (
               <div className="space-y-3 p-4 rounded-b-lg" style={{ boxShadow: "0px 12px 24px 0px rgba(0,0,0,0.1)" }}>
                 {Object.entries(section.groups).map(([groupKey, group]) => {
                   const groupOpen = openGroups.has(groupKey);
+                  const groupComplete = isGroupComplete(group.items);
                   return (
                     <div key={groupKey} className="rounded-lg border border-slate-200 bg-tertiary " >
                       <button
                         type="button"
                         onClick={() => toggleGroup(groupKey)}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left font-medium"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left font-medium relative"
                       >
-                        <span>Grupo: {group.groupName}</span>
+                        <span className="flex items-center gap-2">
+                          <span>Grupo: {group.groupName}</span>
+                          
+                        </span>
+                         {groupComplete && <span className="text-green-600 ml-10 mr-auto text-[1.5em] ">✓</span>}
                         <span className="text-2xl">{groupOpen ? "−" : "+"}</span>
+                       
                       </button>
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">
                           {group.items.map((item) => (
                             <div key={item.item_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
-                              <p className="font-semibold">{item.raw_description}</p>
-                              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
-                                <p>Cantidad real: {item.actual_quantity ?? "-"}</p>
-                                <p>Estado: {item.status ?? "-"}</p>
-                                {item.status_note && <p>Nota: {item.status_note}</p>}
-                              </div>
-                              {item.variant_name && <p className="mt-2">Variante: {item.variant_name}</p>}
+                              <label className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={checkedItems.has(item.item_id)}
+                                  onChange={() => toggleItemChecked(item.item_id)}
+                                  className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <div className="flex-1">
+                                  <p className="font-semibold">{item.raw_description}</p>
+                                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                    <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
+                                    <p>Cantidad real: {item.actual_quantity ?? "-"}</p>
+                                    <p>Id: {item.group_id ?? "-"}</p>
+                                    <p>Estado: {item.status ?? "-"}</p>
+                                    {item.status_note && <p>Nota: {item.status_note}</p>}
+                                  </div>
+                                  {item.variant_name && <p className="mt-2">Variante: {item.variant_name}</p>}
+                                </div>
+                              </label>
                             </div>
                           ))}
                         </div>
