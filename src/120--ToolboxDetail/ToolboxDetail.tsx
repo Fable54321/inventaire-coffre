@@ -16,10 +16,42 @@ const ToolboxDetail = () => {
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
-  const checkedItems = useMemo(
+  const [optimisticCheckedById, setOptimisticCheckedById] = useState<Record<number, boolean>>({});
+  const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
   );
+  const checkedItems = useMemo(() => {
+    const next = new Set(databaseCheckedItems);
+
+    Object.entries(optimisticCheckedById).forEach(([itemId, isChecked]) => {
+      const numericItemId = Number(itemId);
+
+      if (isChecked) {
+        next.add(numericItemId);
+      } else {
+        next.delete(numericItemId);
+      }
+    });
+
+    return next;
+  }, [databaseCheckedItems, optimisticCheckedById]);
+
+  useEffect(() => {
+    setOptimisticCheckedById((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      Object.entries(next).forEach(([itemId, optimisticChecked]) => {
+        if (databaseCheckedItems.has(Number(itemId)) === optimisticChecked) {
+          delete next[Number(itemId)];
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [databaseCheckedItems]);
 
   useEffect(() => {
     if (!toolboxId) return;
@@ -37,6 +69,7 @@ const ToolboxDetail = () => {
     if (!toolboxItem) return;
 
     const nextChecked = !checkedItems.has(itemId);
+    setOptimisticCheckedById((prev) => ({ ...prev, [itemId]: nextChecked }));
 
     try {
       await updateToolboxItem(Number(toolboxId), itemId, {
@@ -46,6 +79,11 @@ const ToolboxDetail = () => {
         is_checked: nextChecked,
       });
     } catch (error) {
+      setOptimisticCheckedById((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
       console.error('Error updating item checked state:', error);
     }
   };
