@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 const ToolBoxesList = () => {
 
-  const { toolBoxes, loading, error } = useToolBoxes();
+  const { toolBoxes, toolboxCheckSummaryById, loading, error } = useToolBoxes();
 
 
   type SortMap = Record<string, number>;
@@ -48,7 +48,17 @@ const ToolBoxesList = () => {
                 <img src={toolbox_icon} alt="Toolbox" className="w-10 h-10" />
               </div>
               <p className="font-bold text-secondary text-[1.7em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">Caja: {toolbox.code}</p>
-              <p className="text-[1em] ">Usado por : <p className="text-[1.7em] inline font-bold">{toolbox.name}</p></p>
+              <div className="flex flex-col gap-1">
+                <p className="text-[1em] ">
+                  Usado por : <span className="text-[1.7em] inline font-bold">{toolbox.name}</span>
+                </p>
+                <p className="text-sm font-semibold text-secondary">
+                  Herramientas verificadas :{" "}
+                  {toolboxCheckSummaryById[toolbox.id]
+                    ? `${toolboxCheckSummaryById[toolbox.id].checked} / ${toolboxCheckSummaryById[toolbox.id].total}`
+                    : "-"}
+                </p>
+              </div>
               <ChevronRight className=" text-secondary absolute right-4 top-1/2 transform -translate-y-1/2" strokeWidth={3} />
             </Link>
           </li>

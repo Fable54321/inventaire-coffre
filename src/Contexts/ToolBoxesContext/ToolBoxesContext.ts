@@ -6,6 +6,11 @@ export interface ToolBox {
   code: string;
 }
 
+export interface ToolboxCheckSummary {
+  checked: number;
+  total: number;
+}
+
 export interface ToolboxInventoryItem {
   toolbox_id: number;
   toolbox_code: string;
@@ -41,6 +46,7 @@ export interface ToolboxInventoryItem {
 
 export interface ToolBoxesContextType {
   toolBoxes: ToolBox[];
+  toolboxCheckSummaryById: Record<number, ToolboxCheckSummary>;
   toolboxItems: ToolboxInventoryItem[];
   toolboxItemsLoading: boolean;
   toolboxItemsError: string | null;

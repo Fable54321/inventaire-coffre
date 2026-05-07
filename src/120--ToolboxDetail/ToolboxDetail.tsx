@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
+import { Check } from "lucide-react";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -96,6 +97,15 @@ const ToolboxDetail = () => {
   const isGroupComplete = (groupItems: typeof toolboxItems[number][]) =>
     groupItems.every((item) => checkedItems.has(item.item_id));
 
+  const getGroupCheckedCount = (groupItems: typeof toolboxItems[number][]) =>
+    groupItems.filter((item) => checkedItems.has(item.item_id)).length;
+
+  const getSectionCheckedCount = (section: typeof groupedItems[string]) =>
+    Object.values(section.groups).reduce((acc, group) => acc + getGroupCheckedCount(group.items), 0);
+
+  const getSectionTotalCount = (section: typeof groupedItems[string]) =>
+    Object.values(section.groups).reduce((acc, group) => acc + group.items.length, 0);
+
   const isSectionComplete = (section: typeof groupedItems[string]) =>
     Object.values(section.groups).every((group) =>
       group.items.every((item) => checkedItems.has(item.item_id))
@@ -147,8 +157,8 @@ const ToolboxDetail = () => {
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
         </div>
-        <Link to="/" className="bg-green-600 text-white">
-          Volver a la lista
+        <Link to="/" className="bg-linear-to-t from-red-500 to-red-700 p-2 text-[1.1em] rounded-lg font-bold font-inter shadow-xl text-white">
+          volver
         </Link>
       </div>
 
@@ -173,7 +183,7 @@ const ToolboxDetail = () => {
                 <div className="flex flex-col gap-2">
                 <p className="flex items-center gap-4">
                   <span>Sección: {section.sectionName}</span>
-                  
+                  <span>({getSectionCheckedCount(section)} / {getSectionTotalCount(section)})</span>
                 </p>
                 {section.sectionType && <p className="text-sm text-muted">Tipo: {section.sectionType}</p>}
                 </div>
@@ -198,7 +208,7 @@ const ToolboxDetail = () => {
                       >
                         <span className="flex items-center gap-2">
                           <span>Grupo: {group.groupName}</span>
-                          
+                          <span>({getGroupCheckedCount(group.items)} / {group.items.length})</span>
                         </span>
                          {groupComplete && <span className="text-green-600 ml-10 mr-auto text-[1.5em] ">✓</span>}
                         <span className="text-2xl">{groupOpen ? "−" : "+"}</span>
@@ -207,14 +217,16 @@ const ToolboxDetail = () => {
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">
                           {group.items.map((item) => (
-                            <div key={item.item_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
-                              <label className="flex items-start gap-3">
+                            <div key={item.item_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm relative">
+                              <label className={`absolute top-3 right-3 w-15 h-15 rounded-xl  shadow-[0_4px_6px_rgba(0,0,0,0.1)] border   border-secondary border-b-3 border-t-0 border-l-0 hover:cursor-pointer flex justify-center items-center bg-tertiary `}>
+                                {<Check className= {`text-secondary ${checkedItems.has(item.item_id) ? " " : "hidden"}`} size={50}   />}
                                 <input
                                   type="checkbox"
                                   checked={checkedItems.has(item.item_id)}
                                   onChange={() => toggleItemChecked(item.item_id)}
-                                  className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                  className="hidden"
                                 />
+                                </label>
                                 <div className="flex-1">
                                   <p className="font-semibold">{item.raw_description}</p>
                                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -226,7 +238,7 @@ const ToolboxDetail = () => {
                                   </div>
                                   {item.variant_name && <p className="mt-2">Variante: {item.variant_name}</p>}
                                 </div>
-                              </label>
+                              
                             </div>
                           ))}
                         </div>
