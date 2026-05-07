@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
-import { Check } from "lucide-react";
+import { Check, CheckCheck, ChevronsRight } from "lucide-react";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -17,6 +17,7 @@ const ToolboxDetail = () => {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [optimisticCheckedById, setOptimisticCheckedById] = useState<Record<number, boolean>>({});
+  const [doneChecking, setDoneChecking] = useState(false);
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
@@ -36,22 +37,6 @@ const ToolboxDetail = () => {
 
     return next;
   }, [databaseCheckedItems, optimisticCheckedById]);
-
-  useEffect(() => {
-    setOptimisticCheckedById((prev) => {
-      const next = { ...prev };
-      let changed = false;
-
-      Object.entries(next).forEach(([itemId, optimisticChecked]) => {
-        if (databaseCheckedItems.has(Number(itemId)) === optimisticChecked) {
-          delete next[Number(itemId)];
-          changed = true;
-        }
-      });
-
-      return changed ? next : prev;
-    });
-  }, []);
 
   useEffect(() => {
     if (!toolboxId) return;
@@ -78,6 +63,11 @@ const ToolboxDetail = () => {
         status_note: toolboxItem.status_note,
         is_checked: nextChecked,
       });
+      setOptimisticCheckedById((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
     } catch (error) {
       setOptimisticCheckedById((prev) => {
         const next = { ...prev };
@@ -88,10 +78,55 @@ const ToolboxDetail = () => {
     }
   };
 
+  const checkGroupItems = async (groupItems: typeof toolboxItems[number][]) => {
+    if (!toolboxId) return;
+    const uncheckedItems = groupItems.filter((item) => !checkedItems.has(item.item_id));
 
-  useEffect(() => {
-    console.log("Toolbox items updated:", toolboxItems);
-  },[toolboxItems])
+    if (uncheckedItems.length === 0) return;
+
+    setOptimisticCheckedById((prev) => {
+      const next = { ...prev };
+      uncheckedItems.forEach((item) => {
+        next[item.item_id] = true;
+      });
+      return next;
+    });
+
+    const updateResults = await Promise.allSettled(
+      uncheckedItems.map((item) =>
+        updateToolboxItem(Number(toolboxId), item.item_id, {
+          actual_quantity: item.actual_quantity,
+          status: item.status,
+          status_note: item.status_note,
+          is_checked: true,
+        }),
+      ),
+    );
+
+    const failedItemIds = uncheckedItems
+      .filter((_, index) => updateResults[index].status === "rejected")
+      .map((item) => item.item_id);
+    const successfulItemIds = uncheckedItems
+      .filter((_, index) => updateResults[index].status === "fulfilled")
+      .map((item) => item.item_id);
+
+    setOptimisticCheckedById((prev) => {
+      const next = { ...prev };
+
+      [...successfulItemIds, ...failedItemIds].forEach((itemId) => {
+        delete next[itemId];
+      });
+
+      return next;
+    });
+
+    if (failedItemIds.length > 0) {
+      console.error("Error checking all group items:", updateResults);
+    }
+  };
+
+
+
 
  
 
@@ -183,10 +218,18 @@ const ToolboxDetail = () => {
     });
   };
 
+  const handleDoneChecking = () => {
+    if (!doneChecking) {
+      if (window.confirm("¿Estás seguro de que has terminado de revisar esta caja? Asegúrate de haber marcado todas las herramientas que has verificado.")) {
+        setDoneChecking(true);
+      }
+    }
+  };
+
   return (
     <section className="w-full max-w-5xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <div>
+        <div className="flex-1">
           <h2 className="text-2xl font-bold text-secondary">
             {selectedToolbox ? `Caja ${selectedToolbox.code}` : "Detalles de la caja"}
           </h2>
@@ -194,10 +237,19 @@ const ToolboxDetail = () => {
           <p className="mt-2 text-sm text-slate-600">
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
+        </div> 
+        <div className="flex-1 flex flex-col items-center justify-center hover:cursor-pointer">
+        <button  className="italic underline font-bold text-secondary hover:cursor-pointer "
+        onClick={() => {handleDoneChecking()}}>
+          He terminado de revisar esta caja
+        </button>
+        <ChevronsRight className="text-secondary text-[2em] " />
         </div>
-        <Link to="/" className="bg-linear-to-t from-red-500 to-red-700 p-2 text-[1.1em] rounded-lg font-bold font-inter shadow-xl text-white">
+        <div className="flex-1 flex justify-end">
+        <Link to="/" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[1.1em] rounded-lg font-bold font-inter shadow-xl text-white">
           volver
         </Link>
+        </div>
       </div>
 
       {toolboxItemsLoading && <p>Cargando artículos...</p>}
@@ -242,19 +294,35 @@ const ToolboxDetail = () => {
                   const groupComplete = isGroupComplete(group.items);
                   return (
                     <div key={groupKey} className="rounded-lg border border-slate-200 bg-tertiary " >
+                      <div className="flex w-full items-center gap-2 px-4 py-3 font-medium relative">
                       <button
                         type="button"
                         onClick={() => toggleGroup(groupKey)}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left font-medium relative"
+                        className="flex min-w-0 flex-1 items-center justify-between text-left"
                       >
                         <span className="flex items-center gap-2">
                           <span>Grupo: {group.groupName}</span>
                           <span>({getGroupCheckedCount(group.items)} / {group.items.length})</span>
                         </span>
+                        <div className="flex items-center gap-3 mr-4 ml-auto">
+                          <p>MARCAR TODO EL GRUPO :</p>
                          {groupComplete && <span className="text-green-600 ml-10 mr-auto text-[1.5em] ">✓</span>}
+                            <button
+                        type="button"
+                        onClick={() => checkGroupItems(group.items)}
+                        disabled={groupComplete}
+                        title="Marcar todo el grupo"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        
+                        <CheckCheck size={24} />
+                      </button>
+                      </div>
                         <span className="text-2xl">{groupOpen ? "−" : "+"}</span>
                        
                       </button>
+                   
+                      </div>
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">
                           {group.items.map((item) => (
@@ -268,7 +336,6 @@ const ToolboxDetail = () => {
                                   className="hidden"
                                 />
                                 </label>
-                                <p>ID: {item.item_id}</p>
                                 <div className="flex-1">
                                   <p className="font-semibold max-w-[85%]">{item.raw_description}</p>
                                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
