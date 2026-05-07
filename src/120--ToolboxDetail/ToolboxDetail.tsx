@@ -51,7 +51,7 @@ const ToolboxDetail = () => {
 
       return changed ? next : prev;
     });
-  }, [databaseCheckedItems]);
+  }, []);
 
   useEffect(() => {
     if (!toolboxId) return;
@@ -210,7 +210,9 @@ const ToolboxDetail = () => {
         const sectionOpen = openSections.has(sectionKey);
         const sectionComplete = isSectionComplete(section);
         return (
-          <div key={sectionKey} className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm"> 
+
+          <div key={sectionKey} className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm">
+            
             <button
               type="button"
               onClick={() => toggleSection(sectionKey)}
@@ -219,6 +221,7 @@ const ToolboxDetail = () => {
             >
               <div className="relative flex justify-between w-full">
                 <div className="flex flex-col gap-2">
+                  
                 <p className="flex items-center gap-4">
                   <span>Sección: {section.sectionName}</span>
                   <span>({getSectionCheckedCount(section)} / {getSectionTotalCount(section)})</span>
@@ -265,8 +268,9 @@ const ToolboxDetail = () => {
                                   className="hidden"
                                 />
                                 </label>
+                                <p>ID: {item.item_id}</p>
                                 <div className="flex-1">
-                                  <p className="font-semibold">{item.raw_description}</p>
+                                  <p className="font-semibold max-w-[85%]">{item.raw_description}</p>
                                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                                     <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
                                     <p>Cantidad real: {item.actual_quantity ?? "-"}</p>
