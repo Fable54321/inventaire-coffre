@@ -278,6 +278,12 @@ const ToolboxDetail = () => {
   const getSectionTotalCount = (section: typeof groupedItems[string]) =>
     Object.values(section.groups).reduce((acc, group) => acc + group.items.length, 0);
 
+  const getCheckedCount = () =>
+    toolboxItems.filter((item) => checkedItems.has(item.item_id)).length;
+
+  
+
+
   const isSectionComplete = (section: typeof groupedItems[string]) =>
     Object.values(section.groups).every((group) =>
       group.items.every((item) => checkedItems.has(item.item_id))
@@ -336,6 +342,7 @@ const ToolboxDetail = () => {
           <p className="mt-2 text-sm text-slate-600">
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
+          <p>recuento total: {getCheckedCount()} / {toolboxItems.length}</p>
         </div> 
         <div className="flex-1 flex flex-col items-center justify-center hover:cursor-pointer">
         <button  className="italic underline font-bold text-secondary hover:cursor-pointer "
