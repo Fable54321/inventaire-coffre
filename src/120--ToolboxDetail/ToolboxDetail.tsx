@@ -347,7 +347,7 @@ const ToolboxDetail = () => {
         </div> 
         <div className="flex-1 flex flex-col items-center justify-center hover:cursor-pointer">
         
-        <ChevronsRight className="text-secondary text-[2em] " />
+        
         </div>
         <div className="flex-1 flex justify-end">
         <Link to="/" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
@@ -359,6 +359,7 @@ const ToolboxDetail = () => {
       <button  className="italic underline font-bold mx-auto w-full my-10 text-[1.5em] text-secondary hover:cursor-pointer "
         onClick={() => {handleDoneChecking()}}>
           He terminado de revisar esta caja
+          <ChevronsRight className="text-secondary text-[2em] " />
         </button>
 
       {toolboxItemsLoading && <p>Cargando artículos...</p>}
