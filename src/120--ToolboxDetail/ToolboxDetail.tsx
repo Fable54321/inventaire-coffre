@@ -349,7 +349,7 @@ const ToolboxDetail = () => {
         <ChevronsRight className="text-secondary text-[2em] " />
         </div>
         <div className="flex-1 flex justify-end">
-        <Link to="/" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[1.1em] rounded-lg font-bold font-inter shadow-xl text-white">
+        <Link to="/" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
           volver
         </Link>
         </div>
