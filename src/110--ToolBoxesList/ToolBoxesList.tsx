@@ -26,10 +26,10 @@ const ToolBoxesList = () => {
   
   return (
     <div className="w-full ">
-      <div className="relative w-[min(750px,99%)] mx-auto my-2">
-        <div className="h-0.5 w-20 bg-linear-to-l from-primary to-transparent absolute left-15 top-1/2 -translate-y-1/2"></div>
-        <div className="h-0.5 w-20 bg-linear-to-r from-primary to-transparent absolute right-15 top-1/2 -translate-y-1/2"></div>
-      <h2 className="font-bold font-[inter] text-[1.6em] text-secondary text-center" >Lista de cajas de herramientas</h2>
+      <div className="relative w-[min(750px,99%)] mx-auto my-4">
+        <div className="h-0.5 w-20 bg-linear-to-l from-primary to-transparent absolute left-5 top-1/2 -translate-y-1/2"></div>
+        <div className="h-0.5 w-20 bg-linear-to-r from-primary to-transparent absolute right-5 top-1/2 -translate-y-1/2"></div>
+      <h2 className="font-bold font-[inter] text-[2em] text-secondary text-center" >Lista de cajas de herramientas</h2>
       <div></div>
       </div>
       {loading && <p>Cargando...</p>}
