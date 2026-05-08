@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
-import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp } from "lucide-react";
+import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X, ArrowLeftToLine } from "lucide-react";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -177,35 +177,36 @@ const ToolboxDetail = () => {
     }
   };
 
-  const checkGroupItems = async (groupItems: typeof toolboxItems[number][]) => {
+  const toggleGroupItemsChecked = async (groupItems: typeof toolboxItems[number][]) => {
     if (!toolboxId) return;
-    const uncheckedItems = groupItems.filter((item) => !checkedItems.has(item.item_id));
+    const nextChecked = !isGroupComplete(groupItems);
+    const itemsToUpdate = groupItems.filter((item) => checkedItems.has(item.item_id) !== nextChecked);
 
-    if (uncheckedItems.length === 0) return;
+    if (itemsToUpdate.length === 0) return;
 
     setOptimisticCheckedById((prev) => {
       const next = { ...prev };
-      uncheckedItems.forEach((item) => {
-        next[item.item_id] = true;
+      itemsToUpdate.forEach((item) => {
+        next[item.item_id] = nextChecked;
       });
       return next;
     });
 
     const updateResults = await Promise.allSettled(
-      uncheckedItems.map((item) =>
+      itemsToUpdate.map((item) =>
         updateToolboxItem(Number(toolboxId), item.item_id, {
           actual_quantity: item.actual_quantity,
           status: item.status,
           status_note: item.status_note,
-          is_checked: true,
+          is_checked: nextChecked,
         }),
       ),
     );
 
-    const failedItemIds = uncheckedItems
+    const failedItemIds = itemsToUpdate
       .filter((_, index) => updateResults[index].status === "rejected")
       .map((item) => item.item_id);
-    const successfulItemIds = uncheckedItems
+    const successfulItemIds = itemsToUpdate
       .filter((_, index) => updateResults[index].status === "fulfilled")
       .map((item) => item.item_id);
 
@@ -220,7 +221,7 @@ const ToolboxDetail = () => {
     });
 
     if (failedItemIds.length > 0) {
-      console.error("Error checking all group items:", updateResults);
+      console.error("Error toggling all group items:", updateResults);
     }
   };
 
@@ -350,7 +351,7 @@ const ToolboxDetail = () => {
         </div>
         <div className="flex-1 flex justify-end">
         <Link to="/" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
-          volver
+          <ArrowLeftToLine size={50} strokeWidth={2} />
         </Link>
         </div>
       </div>
@@ -415,17 +416,16 @@ const ToolboxDetail = () => {
                           <span>({getGroupCheckedCount(group.items)} / {group.items.length})</span>
                         </span>
                         <div className="flex text-[0.8em] items-center gap-3 ">
-                          <p>MARCAR TODO EL GRUPO :</p>
+                          <p>{groupComplete ? "DESMARCAR TODO EL GRUPO :" : "MARCAR TODO EL GRUPO :"}</p>
                          
                             <button
                         type="button"
-                        onClick={() => checkGroupItems(group.items)}
-                        disabled={groupComplete}
-                        title="Marcar todo el grupo"
+                        onClick={() => toggleGroupItemsChecked(group.items)}
+                        title={groupComplete ? "Desmarcar todo el grupo" : "Marcar todo el grupo"}
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         
-                        <CheckCheck size={24} />
+                        {groupComplete ? <X size={24} /> : <CheckCheck size={24} />}
                       </button>
                       </div>
                       
