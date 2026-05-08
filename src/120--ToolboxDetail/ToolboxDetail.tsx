@@ -333,22 +333,19 @@ const ToolboxDetail = () => {
 
   return (
     <section className="w-full max-w-5xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className=" flex items-center justify-between">
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-secondary">
+          <h2 className="text-[3em] font-bold text-secondary">
             {selectedToolbox ? `Caja ${selectedToolbox.code}` : "Detalles de la caja"}
           </h2>
-          {selectedToolbox && <p className="text-sm text-muted">Usado por : {selectedToolbox.name}</p>}
+          {selectedToolbox && <p className="text-lg font-bold text-muted">Usado por : {selectedToolbox.name}</p>}
           <p className="mt-2 text-sm text-slate-600">
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
           <p>recuento total: {getCheckedCount()} / {toolboxItems.length}</p>
         </div> 
         <div className="flex-1 flex flex-col items-center justify-center hover:cursor-pointer">
-        <button  className="italic underline font-bold text-secondary hover:cursor-pointer "
-        onClick={() => {handleDoneChecking()}}>
-          He terminado de revisar esta caja
-        </button>
+        
         <ChevronsRight className="text-secondary text-[2em] " />
         </div>
         <div className="flex-1 flex justify-end">
@@ -357,6 +354,11 @@ const ToolboxDetail = () => {
         </Link>
         </div>
       </div>
+
+      <button  className="italic underline font-bold mx-auto w-full my-10 text-[1.5em] text-secondary hover:cursor-pointer "
+        onClick={() => {handleDoneChecking()}}>
+          He terminado de revisar esta caja
+        </button>
 
       {toolboxItemsLoading && <p>Cargando artículos...</p>}
       {toolboxItemsError && <p className="text-red-500">Error : {toolboxItemsError}</p>}
