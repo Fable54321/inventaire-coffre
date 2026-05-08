@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
-import { Check, CheckCheck, ChevronsRight, Minus, Plus } from "lucide-react";
+import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp } from "lucide-react";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -371,7 +371,7 @@ const ToolboxDetail = () => {
         const sectionComplete = isSectionComplete(section);
         return (
 
-          <div key={sectionKey} className="mb-4 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div key={sectionKey} className="mb-1 rounded-lg border text-[1.7rem] border-slate-200 bg-white shadow-sm">
             
             <button
               type="button"
@@ -388,10 +388,10 @@ const ToolboxDetail = () => {
                 </p>
                 {section.sectionType && <p className="text-sm text-muted">Tipo: {section.sectionType}</p>}
                 </div>
-                {sectionComplete && <span className="text-green-600 text-[2em] ml-10 mr-auto ">✓</span>}
+                {sectionComplete && <span className="text-green-600 text-[2em] ml-auto mr-20  ">✓</span>}
                 
               </div>
-              <span className="text-2xl">{sectionOpen ? "−" : "+"}</span>
+              <span className="text-2xl">{sectionOpen ? <ChevronUp /> : <ChevronDown />}</span>
               
             </button>
 
