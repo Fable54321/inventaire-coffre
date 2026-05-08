@@ -408,13 +408,15 @@ const ToolboxDetail = () => {
                         onClick={() => toggleGroup(groupKey)}
                         className="flex min-w-0 flex-1 items-center justify-between text-left"
                       >
-                        <span className="flex items-center gap-2">
+
+                        <div className="flex flex-col gap-2">
+                        <span className="flex text-[0.8em] items-center gap-2">
                           <span>Grupo: {group.groupName}</span>
                           <span>({getGroupCheckedCount(group.items)} / {group.items.length})</span>
                         </span>
-                        <div className="flex items-center gap-3 mr-4 ml-auto">
+                        <div className="flex text-[0.8em] items-center gap-3 ">
                           <p>MARCAR TODO EL GRUPO :</p>
-                         {groupComplete && <span className="text-green-600 ml-10 mr-auto text-[1.5em] ">✓</span>}
+                         
                             <button
                         type="button"
                         onClick={() => checkGroupItems(group.items)}
@@ -426,11 +428,15 @@ const ToolboxDetail = () => {
                         <CheckCheck size={24} />
                       </button>
                       </div>
-                        <span className="text-2xl">{groupOpen ? "−" : "+"}</span>
+                      
+                      </div>
+                      {groupComplete && <span className="text-green-600 ml-auto mr-15 text-[1.5em] inline ">✓</span>}
+                        <span className="text-2xl">{groupOpen ? <ChevronUp /> : <ChevronDown />}</span>
                        
                       </button>
                    
                       </div>
+                      
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">
                           {group.items.map((item) => (
