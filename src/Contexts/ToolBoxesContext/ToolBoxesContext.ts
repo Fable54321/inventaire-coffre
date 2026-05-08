@@ -61,6 +61,9 @@ export interface ToolBoxesContextType {
       status_note?: string | null;
       is_checked?: boolean | null;
     },
+    options?: {
+      trackCheckedChange?: boolean;
+    },
   ) => Promise<void>;
   loading: boolean;
   error: string | null;

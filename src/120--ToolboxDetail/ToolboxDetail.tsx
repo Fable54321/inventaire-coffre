@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
-import { Check, CheckCheck, ChevronsRight } from "lucide-react";
+import { Check, CheckCheck, ChevronsRight, Minus, Plus } from "lucide-react";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -17,6 +17,9 @@ const ToolboxDetail = () => {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [optimisticCheckedById, setOptimisticCheckedById] = useState<Record<number, boolean>>({});
+  const [actualQuantityDraftById, setActualQuantityDraftById] = useState<Record<number, string>>({});
+  const [savingActualQuantityById, setSavingActualQuantityById] = useState<Record<number, boolean>>({});
+  const [actualQuantityErrorById, setActualQuantityErrorById] = useState<Record<number, string>>({});
   const [doneChecking, setDoneChecking] = useState(false);
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
@@ -48,6 +51,102 @@ const ToolboxDetail = () => {
     }
   }, [toolboxId, fetchToolboxItems]);
 
+  const getDraftedActualQuantity = (toolboxItem: typeof toolboxItems[number]) => {
+    const draft = actualQuantityDraftById[toolboxItem.item_id];
+
+    if (draft === undefined) {
+      return toolboxItem.actual_quantity;
+    }
+
+    const trimmedDraft = draft.trim();
+
+    if (trimmedDraft === "") {
+      return null;
+    }
+
+    const nextQuantity = Number(trimmedDraft);
+
+    return Number.isFinite(nextQuantity) ? nextQuantity : toolboxItem.actual_quantity;
+  };
+
+  const updateActualQuantity = async (
+    toolboxItem: typeof toolboxItems[number],
+    nextQuantityOverride?: number | null,
+  ) => {
+    if (!toolboxId) return;
+
+    const nextQuantity =
+      nextQuantityOverride === undefined ? getDraftedActualQuantity(toolboxItem) : nextQuantityOverride;
+
+    if (nextQuantity !== null && (!Number.isFinite(nextQuantity) || nextQuantity < 0)) {
+      setActualQuantityErrorById((prev) => ({
+        ...prev,
+        [toolboxItem.item_id]: "La cantidad debe ser 0 o más.",
+      }));
+      return;
+    }
+
+    if (nextQuantity === toolboxItem.actual_quantity) {
+      setActualQuantityDraftById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      setActualQuantityErrorById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      return;
+    }
+
+    setSavingActualQuantityById((prev) => ({ ...prev, [toolboxItem.item_id]: true }));
+    setActualQuantityErrorById((prev) => {
+      const next = { ...prev };
+      delete next[toolboxItem.item_id];
+      return next;
+    });
+
+    try {
+      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
+        actual_quantity: nextQuantity,
+        status: toolboxItem.status,
+        status_note: toolboxItem.status_note,
+        is_checked: checkedItems.has(toolboxItem.item_id),
+      }, {
+        trackCheckedChange: false,
+      });
+      setActualQuantityDraftById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+    } catch (error) {
+      setActualQuantityErrorById((prev) => ({
+        ...prev,
+        [toolboxItem.item_id]: "No se pudo guardar la cantidad.",
+      }));
+      console.error("Error updating item actual quantity:", error);
+    } finally {
+      setSavingActualQuantityById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+    }
+  };
+
+  const adjustActualQuantity = async (toolboxItem: typeof toolboxItems[number], delta: number) => {
+    const currentQuantity = getDraftedActualQuantity(toolboxItem) ?? 0;
+    const nextQuantity = Math.max(0, currentQuantity + delta);
+
+    setActualQuantityDraftById((prev) => ({
+      ...prev,
+      [toolboxItem.item_id]: String(nextQuantity),
+    }));
+    await updateActualQuantity(toolboxItem, nextQuantity);
+  };
+
   const toggleItemChecked = async (itemId: number) => {
     if (!toolboxId) return;
     const toolboxItem = toolboxItems.find((item) => item.item_id === itemId);
@@ -58,7 +157,7 @@ const ToolboxDetail = () => {
 
     try {
       await updateToolboxItem(Number(toolboxId), itemId, {
-        actual_quantity: toolboxItem.actual_quantity,
+        actual_quantity: getDraftedActualQuantity(toolboxItem),
         status: toolboxItem.status,
         status_note: toolboxItem.status_note,
         is_checked: nextChecked,
@@ -338,10 +437,57 @@ const ToolboxDetail = () => {
                                 </label>
                                 <div className="flex-1">
                                   <p className="font-semibold max-w-[85%]">{item.raw_description}</p>
-                                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
                                     <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
-                                    <p>Cantidad real: {item.actual_quantity ?? "-"}</p>
-                                    
+                                    <div className="flex flex-col gap-1">
+                                      <span className="font-medium">Cantidad real</span>
+                                      <div className="flex w-fit items-center overflow-hidden rounded-md border border-secondary/50 bg-tertiary shadow-sm">
+                                        <button
+                                          type="button"
+                                          onClick={() => adjustActualQuantity(item, -1)}
+                                          disabled={savingActualQuantityById[item.item_id]}
+                                          title="Restar cantidad real"
+                                          className="flex h-9 w-9 items-center justify-center text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                          <Minus size={18} />
+                                        </button>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          inputMode="numeric"
+                                          value={actualQuantityDraftById[item.item_id] ?? item.actual_quantity ?? ""}
+                                          onChange={(event) =>
+                                            setActualQuantityDraftById((prev) => ({
+                                              ...prev,
+                                              [item.item_id]: event.target.value,
+                                            }))
+                                          }
+                                          onBlur={() => updateActualQuantity(item)}
+                                          onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                              event.currentTarget.blur();
+                                            }
+                                          }}
+                                          disabled={savingActualQuantityById[item.item_id]}
+                                          className="h-9 w-16 border-x border-secondary/30 bg-white text-center font-bold text-secondary outline-none disabled:opacity-60"
+                                          aria-label="Cantidad real"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => adjustActualQuantity(item, 1)}
+                                          disabled={savingActualQuantityById[item.item_id]}
+                                          title="Sumar cantidad real"
+                                          className="flex h-9 w-9 items-center justify-center text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                          <Plus size={18} />
+                                        </button>
+                                      </div>
+                                      {actualQuantityErrorById[item.item_id] && (
+                                        <span className="text-sm text-red-500">
+                                          {actualQuantityErrorById[item.item_id]}
+                                        </span>
+                                      )}
+                                    </div>
                                     <p>Estado: {item.status ?? "-"}</p>
                                     {item.status_note && <p>Nota: {item.status_note}</p>}
                                   </div>

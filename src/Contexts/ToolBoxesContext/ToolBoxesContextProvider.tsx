@@ -85,7 +85,12 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
         status_note?: string | null;
         is_checked?: boolean | null;
       },
+      options: {
+        trackCheckedChange?: boolean;
+      } = {},
     ) => {
+      const trackCheckedChange = options.trackCheckedChange ?? true;
+
       await fetchWithAuth(`/toolboxes/${toolboxId}/items/${itemId}`, {
         method: 'PATCH',
         body: update,
@@ -93,6 +98,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
 
       const currentItem = toolboxItems.find((item) => item.item_id === itemId);
       if (
+        trackCheckedChange &&
         typeof update.is_checked === 'boolean' &&
         currentItem &&
         Boolean(currentItem.is_checked) !== update.is_checked
@@ -115,9 +121,15 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
         });
       }
 
+      const localUpdate = trackCheckedChange
+        ? update
+        : Object.fromEntries(
+            Object.entries(update).filter(([key]) => key !== 'is_checked'),
+          );
+
       setToolboxItems((prev) =>
         prev.map((item) =>
-          item.item_id === itemId ? { ...item, ...update } : item,
+          item.item_id === itemId ? { ...item, ...localUpdate } : item,
         ),
       );
     },
