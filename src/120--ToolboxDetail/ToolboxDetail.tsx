@@ -358,7 +358,7 @@ const ToolboxDetail = () => {
         </div>
       </div>
 
-      <button  className="flex items-center justify-center italic  underline font-bold mx-auto w-full my-10 text-[1.5em] text-secondary hover:cursor-pointer "
+      <button  className="flex items-center justify-center italic gap-2  underline font-bold mx-auto w-full my-18 text-[2.2em] text-secondary hover:cursor-pointer "
         onClick={() => {handleDoneChecking()}}>
           He terminado de revisar esta caja
           <ChevronsRight className="text-secondary text-[2em] " />
@@ -528,6 +528,11 @@ const ToolboxDetail = () => {
           </div>
         );
       })}
+        <button  className="flex items-center justify-center italic gap-2  underline font-bold mx-auto w-full my-18 text-[2.2em] text-secondary hover:cursor-pointer "
+        onClick={() => {handleDoneChecking()}}>
+          He terminado de revisar esta caja
+          <ChevronsRight className="text-secondary text-[2em] " />
+        </button>
     </section>
   );
 };
