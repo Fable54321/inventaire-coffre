@@ -21,6 +21,7 @@ const ToolboxDetail = () => {
   const [savingActualQuantityById, setSavingActualQuantityById] = useState<Record<number, boolean>>({});
   const [actualQuantityErrorById, setActualQuantityErrorById] = useState<Record<number, string>>({});
   const [doneChecking, setDoneChecking] = useState(false);
+  const [showDoneConfirmModal, setShowDoneConfirmModal] = useState(false);
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
@@ -100,6 +101,12 @@ const ToolboxDetail = () => {
       return;
     }
 
+    // Auto-uncheck if actual quantity is less than expected quantity
+    const isQuantityLessThanExpected =
+      nextQuantity !== null && toolboxItem.expected_quantity !== null && nextQuantity < toolboxItem.expected_quantity;
+    const shouldUncheck = isQuantityLessThanExpected && checkedItems.has(toolboxItem.item_id);
+    const nextCheckedState = shouldUncheck ? false : checkedItems.has(toolboxItem.item_id);
+
     setSavingActualQuantityById((prev) => ({ ...prev, [toolboxItem.item_id]: true }));
     setActualQuantityErrorById((prev) => {
       const next = { ...prev };
@@ -112,7 +119,7 @@ const ToolboxDetail = () => {
         actual_quantity: nextQuantity,
         status: toolboxItem.status,
         status_note: toolboxItem.status_note,
-        is_checked: checkedItems.has(toolboxItem.item_id),
+        is_checked: nextCheckedState,
       }, {
         trackCheckedChange: false,
       });
@@ -121,6 +128,13 @@ const ToolboxDetail = () => {
         delete next[toolboxItem.item_id];
         return next;
       });
+      // Update optimistic state if the item was unchecked
+      if (shouldUncheck) {
+        setOptimisticCheckedById((prev) => ({
+          ...prev,
+          [toolboxItem.item_id]: false,
+        }));
+      }
     } catch (error) {
       setActualQuantityErrorById((prev) => ({
         ...prev,
@@ -326,10 +340,17 @@ const ToolboxDetail = () => {
 
   const handleDoneChecking = () => {
     if (!doneChecking) {
-      if (window.confirm("¿Estás seguro de que has terminado de revisar esta caja? Asegúrate de haber marcado todas las herramientas que has verificado.")) {
-        setDoneChecking(true);
-      }
+      setShowDoneConfirmModal(true);
     }
+  };
+
+  const confirmDoneChecking = () => {
+    setShowDoneConfirmModal(false);
+    setDoneChecking(true);
+  };
+
+  const cancelDoneChecking = () => {
+    setShowDoneConfirmModal(false);
   };
 
   return (
@@ -513,7 +534,6 @@ const ToolboxDetail = () => {
                                     <p>Estado: {item.status ?? "-"}</p>
                                     {item.status_note && <p>Nota: {item.status_note}</p>}
                                   </div>
-                                  {item.variant_name && <p className="mt-2">Variante: {item.variant_name}</p>}
                                 </div>
                               
                             </div>
@@ -534,6 +554,42 @@ const ToolboxDetail = () => {
             He terminado de revisar esta caja
             <ChevronsRight className="text-secondary text-[2em] " />
           </button>
+      )}
+
+      {showDoneConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full border border-slate-200">
+            <h3 className="text-2xl font-bold text-secondary mb-4">Confirmar revisión</h3>
+            <p className="text-lg text-slate-700 mb-6">¿Estás seguro de que has terminado de revisar esta caja?</p>
+            
+            {toolboxItems.length - getCheckedCount() > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                <p className="text-amber-900 font-semibold mb-2">⚠️ Herramientas sin marcar</p>
+                <p className="text-amber-800">
+                  Tienes <span className="font-bold">{toolboxItems.length - getCheckedCount()}</span> herramienta{toolboxItems.length - getCheckedCount() !== 1 ? "s" : ""} sin marcar.
+                </p>
+                <p className="text-amber-800 mt-2">
+                  ¿Confirmas que estas herramientas no están olvidadas sino que realmente faltan?
+                </p>
+              </div>
+            )}
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelDoneChecking}
+                className="px-6 py-2 rounded-lg font-semibold bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDoneChecking}
+                className="px-6 py-2 rounded-lg font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors shadow-md"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
