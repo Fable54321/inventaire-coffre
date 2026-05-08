@@ -356,7 +356,7 @@ const ToolboxDetail = () => {
         </div>
       </div>
 
-      <button  className="italic underline font-bold mx-auto w-full my-10 text-[1.5em] text-secondary hover:cursor-pointer "
+      <button  className="flex items-center italic  underline font-bold mx-auto w-full my-10 text-[1.5em] text-secondary hover:cursor-pointer "
         onClick={() => {handleDoneChecking()}}>
           He terminado de revisar esta caja
           <ChevronsRight className="text-secondary text-[2em] " />
