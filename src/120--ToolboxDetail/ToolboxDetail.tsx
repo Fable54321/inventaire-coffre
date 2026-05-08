@@ -421,7 +421,10 @@ const ToolboxDetail = () => {
                          
                             <button
                         type="button"
-                        onClick={() => toggleGroupItemsChecked(group.items)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleGroupItemsChecked(group.items);
+                        }}
                         title={groupComplete ? "Desmarcar todo el grupo" : "Marcar todo el grupo"}
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
                       >
