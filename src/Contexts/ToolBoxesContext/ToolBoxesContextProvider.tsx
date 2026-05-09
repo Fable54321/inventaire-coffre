@@ -50,6 +50,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
     }
   }, []);
 
+
   const fetchToolboxItems = useCallback(async (toolboxId: number) => {
     setToolboxItemsLoading(true);
     setToolboxItemsError(null);
@@ -67,6 +68,8 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
   }, []);
 
 
+
+
   useEffect(() => {
     const loadToolBoxes = async () => {
       await fetchToolBoxes();
@@ -74,6 +77,27 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
 
     void loadToolBoxes();
   }, [fetchToolBoxes]);
+
+const updateToolboxInventoryStatus = useCallback(
+  async (
+    toolboxId: number,
+    update: { inventory_done: boolean; verified_at: string | null },
+  ) => {
+    await fetchWithAuth(`/toolboxes/${toolboxId}`, {
+      method: 'PATCH',
+      body: update,
+    });
+
+    setToolBoxes((prev) =>
+      prev.map((toolbox) =>
+        toolbox.id === toolboxId
+          ? { ...toolbox, ...update }
+          : toolbox,
+      ),
+    );
+  },
+  [],
+);
 
   const updateToolboxItem = useCallback(
     async (
@@ -144,6 +168,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
     toolboxItemsError,
     fetchToolBoxes,
     fetchToolboxItems,
+    updateToolboxInventoryStatus,
     updateToolboxItem,
     loading,
     error,

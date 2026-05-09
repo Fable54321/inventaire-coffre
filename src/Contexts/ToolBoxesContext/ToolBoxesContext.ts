@@ -4,6 +4,8 @@ export interface ToolBox {
   id: number;
   name: string;
   code: string;
+  inventory_done: boolean;
+  verified_at: string | null;
 }
 
 export interface ToolboxCheckSummary {
@@ -44,6 +46,8 @@ export interface ToolboxInventoryItem {
   tool_french_name: string | null;
 }
 
+
+
 export interface ToolBoxesContextType {
   toolBoxes: ToolBox[];
   toolboxCheckSummaryById: Record<number, ToolboxCheckSummary>;
@@ -52,6 +56,13 @@ export interface ToolBoxesContextType {
   toolboxItemsError: string | null;
   fetchToolBoxes: () => Promise<void>;
   fetchToolboxItems: (toolboxId: number) => Promise<void>;
+    updateToolboxInventoryStatus: (
+    toolboxId: number,
+    update: {
+      inventory_done: boolean;
+      verified_at: string | null;
+    },
+  ) => Promise<void>;
   updateToolboxItem: (
     toolboxId: number,
     itemId: number,
@@ -65,6 +76,7 @@ export interface ToolBoxesContextType {
       trackCheckedChange?: boolean;
     },
   ) => Promise<void>;
+
   loading: boolean;
   error: string | null;
 }
