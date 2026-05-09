@@ -53,11 +53,21 @@ const clearSignature = () => {
   setSignatureDataUrl("");
 };
 
+const currentDateString = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="flex flex-col items-center gap-4">
-        <h3 className="text-2xl text-center font-bold text-secondary mb-4" >Confirmé que haya terminado de revisar el cofre. </h3>
-           <label className={` w-15 h-15 rounded-xl  shadow-[0_4px_6px_rgba(0,0,0,0.1)] border   border-secondary border-b-3 border-t-gray-100 border-r-gray-300 hover:cursor-pointer flex justify-center items-center bg-tertiary `}>
+        <div className=" flex flex-col items-center">
+        <h3 className="text-2xl text-center font-bold text-secondary " >
+Confirmo que terminé de revisar la caja fuerte el:</h3>
+<p className="font-bold text-[1.3em] text-secondary">{currentDateString}</p>
+</div>
+<div className="flex flex-col items-center">
+<p>(
+Marque la casilla e introduzca sus iniciales.
+)</p>
+
+           <label className={` w-15 h-15 rounded-xl  shadow-[0_4px_6px_rgba(0,0,0,0.1)] border mt-2  border-secondary border-b-3 border-t-gray-100 border-r-gray-300 hover:cursor-pointer flex justify-center items-center bg-tertiary `}>
                                 {<Check className= {`text-secondary ${isVerificationConfirmed ? " " : "hidden"}`} size={50}   />}
                                 <input
                                   type="checkbox"
@@ -66,6 +76,8 @@ const clearSignature = () => {
                                   className="hidden"
                                 />
                                 </label>
+ </div>
+ <div className="flex flex-col gap-2">
       <div className="relative">
         <SignatureCanvas
           ref={signatureRef}
@@ -90,14 +102,16 @@ const clearSignature = () => {
           setSecondStepConfirmed(true);
           onConfirm();
         }}
-        className="px-6 py-2 rounded-lg font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+        className="px-6 py-2 text-[2em] rounded-lg font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors shadow-md disabled:cursor-not-allowed disabled:opacity-60"
       >
         Confirmar
       </button>
         
-      <button type="button" onClick={onCancel} className="px-6 py-2 rounded-lg font-semibold bg-tertiary text-secondary hover:bg-tertiary/90 transition-colors shadow-md">
+      <button type="button" onClick={onCancel} className="px-6 py-2 text-[2em] rounded-lg font-semibold bg-tertiary text-secondary hover:bg-tertiary/90 transition-colors shadow-md">
     anulador
       </button>
+</div>
+
     </div>
   )
 }
