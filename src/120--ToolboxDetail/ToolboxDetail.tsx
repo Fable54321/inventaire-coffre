@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
 import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X, ArrowLeftToLine } from "lucide-react";
+import StartNewVerificationConfirmModal from "./StartNewVerificationConfirmModal";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -23,6 +24,8 @@ const ToolboxDetail = () => {
   const [actualQuantityErrorById, setActualQuantityErrorById] = useState<Record<number, string>>({});
   const [doneChecking, setDoneChecking] = useState(false);
   const [showDoneConfirmModal, setShowDoneConfirmModal] = useState(false);
+  const [showStartNewConfirmModal, setShowStartNewConfirmModal] = useState(false);
+  const [startingNewVerification, setStartingNewVerification] = useState(false);
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
@@ -377,6 +380,52 @@ const confirmDoneChecking = async () => {
   }
 };
 
+const startNewVerification = async () => {
+  if (!toolboxId || !selectedToolbox) return;
+
+  try {
+    setStartingNewVerification(true);
+    // Uncheck every checked item
+    await Promise.all(
+      toolboxItems
+        .filter((item) => item.is_checked)
+        .map((item) =>
+          updateToolboxItem(
+            Number(toolboxId),
+            item.item_id,
+            {
+              actual_quantity: item.actual_quantity,
+              status: item.status,
+              status_note: item.status_note,
+              is_checked: false,
+            },
+            {
+              trackCheckedChange: false,
+            },
+          ),
+        ),
+    );
+
+    // Reset inventory state BUT keep last verified date
+    await updateToolboxInventoryStatus(Number(toolboxId), {
+      inventory_done: false,
+      verified_at: selectedToolbox.verified_at,
+    });
+
+    // Local optimistic reset
+    setOptimisticCheckedById({});
+    setDoneChecking(false);
+
+    // Refresh items from backend
+    await fetchToolboxItems(Number(toolboxId));
+    setShowStartNewConfirmModal(false);
+  } catch (error) {
+    console.error("Error starting new toolbox verification:", error);
+  } finally {
+    setStartingNewVerification(false);
+  }
+};
+
   const cancelDoneChecking = () => {
     setShowDoneConfirmModal(false);
   };
@@ -389,7 +438,17 @@ const confirmDoneChecking = async () => {
             {selectedToolbox ? `Caja ${selectedToolbox.code}` : "Detalles de la caja"}
           </h2>
           {selectedToolbox && <p className="text-[1.8em] font-bold text-muted">Usado por : {selectedToolbox.name}</p>}
-          {selectedToolbox && <p className="text-[1.2em] font-bold text-muted">Última revisión: : {selectedToolbox.verified_at}</p>}
+          {selectedToolbox && <p className="text-[1.2em] font-bold text-muted">Última revisión: {selectedToolbox.verified_at ?? "Nunca"}</p>}
+          {selectedToolbox?.inventory_done && (
+  <button
+    type="button"
+    onClick={() => setShowStartNewConfirmModal(true)}
+    className="flex items-center justify-center italic gap-2  underline font-bold mx-auto w-full  text-[1.8em] text-secondary hover:cursor-pointer"
+  >
+    Empezar una nueva revisión
+    <ChevronsRight className="text-secondary text-[1.5em] " />
+  </button>
+)}
           <p className=" text-lg text-slate-600">
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
@@ -619,6 +678,15 @@ const confirmDoneChecking = async () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showStartNewConfirmModal && (
+        <StartNewVerificationConfirmModal
+          checkedCount={getCheckedCount()}
+          isStarting={startingNewVerification}
+          onCancel={() => setShowStartNewConfirmModal(false)}
+          onConfirm={startNewVerification}
+        />
       )}
     </section>
   );
