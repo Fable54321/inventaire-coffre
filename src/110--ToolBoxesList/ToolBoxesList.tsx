@@ -43,7 +43,8 @@ const ToolBoxesList = () => {
         })
         .map((toolbox) => (
           <li key={toolbox.id} className="">
-            <Link to={`/toolbox/${toolbox.id}`} className="flex gap-10 items-center bg-[#f4fdf1] rounded-lg p-4 relative" style={{ boxShadow: "-2px 2px 24px 0px rgba(0,0,0,0.4)" }}>
+            <Link to={`/toolbox/${toolbox.id}`} className="flex flex-col gap-3 items-center bg-[#f4fdf1] rounded-lg p-4 relative" style={{ boxShadow: "-2px 2px 24px 0px rgba(0,0,0,0.4)" }}>
+              <div className="flex gap-10 items-center">
               <div className="p-1 px-2 rounded-lg bg-primary">
                 <img src={toolbox_icon} alt="Toolbox" className="w-10 h-10" />
               </div>
@@ -53,13 +54,18 @@ const ToolBoxesList = () => {
                   Usado por : 
                 </p>
                 <p className="text-[2em] inline font-bold">{toolbox.name}</p>
+                </div>
+                </div>
+                <div className="flex justify-around w-full">
+                 {toolbox.inventory_done && <p className="text-[1.1em] font-semibold text-secondary">Última revisión: {toolbox.verified_at}</p>} 
                 <p className="text-[1.1em] font-semibold text-secondary">
                   Herramientas verificadas :{" "}
                   {toolboxCheckSummaryById[toolbox.id]
                     ? `${toolboxCheckSummaryById[toolbox.id].checked} / ${toolboxCheckSummaryById[toolbox.id].total}`
                     : "-"}
                 </p>
-              </div>
+
+                </div>
               <ChevronRight className=" text-secondary absolute right-4 top-1/2 transform -translate-y-1/2" strokeWidth={3} />
             </Link>
           </li>
