@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
 import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X, ArrowLeftToLine } from "lucide-react";
 import StartNewVerificationConfirmModal from "./StartNewVerificationConfirmModal";
+import DoneCheckingConfirmModal from "./DoneCheckingConfirmModal";
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -645,39 +646,11 @@ const startNewVerification = async () => {
       )}
 
       {showDoneConfirmModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full border border-slate-200">
-            <h3 className="text-2xl font-bold text-secondary mb-4">Confirmar revisión</h3>
-            <p className="text-lg text-slate-700 mb-6">¿Estás seguro de que has terminado de revisar esta caja?</p>
-            
-            {toolboxItems.length - getCheckedCount() > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                <p className="text-amber-900 font-semibold mb-2">⚠️ Herramientas sin marcar</p>
-                <p className="text-amber-800">
-                  Tienes <span className="font-bold">{toolboxItems.length - getCheckedCount()}</span> herramienta{toolboxItems.length - getCheckedCount() !== 1 ? "s" : ""} sin marcar.
-                </p>
-                <p className="text-amber-800 mt-2">
-                  ¿Confirmas que estas herramientas no están olvidadas sino que realmente faltan?
-                </p>
-              </div>
-            )}
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={cancelDoneChecking}
-                className="px-6 py-2 rounded-lg font-semibold bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDoneChecking}
-                className="px-6 py-2 rounded-lg font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors shadow-md"
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
+        <DoneCheckingConfirmModal
+          uncheckedCount={toolboxItems.length - getCheckedCount()}
+          onCancel={cancelDoneChecking}
+          onConfirm={confirmDoneChecking}
+        />
       )}
 
       {showStartNewConfirmModal && (
