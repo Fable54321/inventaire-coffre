@@ -439,7 +439,7 @@ const startNewVerification = async () => {
             {selectedToolbox ? `Caja ${selectedToolbox.code}` : "Detalles de la caja"}
           </h2>
           {selectedToolbox && <p className="text-[1.8em] font-bold text-muted">Usado por : {selectedToolbox.name}</p>}
-          {selectedToolbox && <p className="text-[1.2em] font-bold text-muted">Última revisión: {selectedToolbox.verified_at ?? "Nunca"}</p>}
+          {selectedToolbox && <p className="text-[1.2em] font-bold text-muted">Última revisión: {selectedToolbox.verified_at ? (selectedToolbox.verified_at).slice(0, 10) : "-" }</p>}
           {selectedToolbox?.inventory_done && (
   <button
     type="button"

@@ -1,3 +1,6 @@
+import { useState } from "react";
+import Signature from "./signature";
+
 interface DoneCheckingConfirmModalProps {
   uncheckedCount: number;
   onCancel: () => void;
@@ -9,10 +12,19 @@ const DoneCheckingConfirmModal = ({
   onCancel,
   onConfirm,
 }: DoneCheckingConfirmModalProps) => {
+
+
+const [firstStepConfirmed, setFirstStepConfirmed] = useState(false);
+const [secondStepConfirmed, setSecondStepConfirmed] = useState(false);
+const [signatureDataUrl, setSignatureDataUrl] = useState("");
+
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full border border-slate-200">
-        <h3 className="text-2xl font-bold text-secondary mb-4">Confirmar revision</h3>
+        {!firstStepConfirmed &&
+          <>
+          <h3 className="text-2xl font-bold text-secondary mb-4">Confirmar revision</h3>
         <p className="text-lg text-slate-700 mb-6">Estas seguro de que has terminado de revisar esta caja?</p>
 
         {uncheckedCount > 0 && (
@@ -38,12 +50,26 @@ const DoneCheckingConfirmModal = ({
           </button>
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={() =>setFirstStepConfirmed(true)}
             className="px-6 py-2 rounded-lg font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors shadow-md"
           >
             Confirmar
           </button>
+         
+          
         </div>
+         </>
+}
+{
+  firstStepConfirmed && !secondStepConfirmed &&
+  <Signature
+    onConfirm={onConfirm}
+    onCancel={onCancel}
+    setSecondStepConfirmed={setSecondStepConfirmed}
+    signatureDataUrl={signatureDataUrl}
+    setSignatureDataUrl={setSignatureDataUrl}
+  />
+}
       </div>
     </div>
   );
