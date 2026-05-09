@@ -29,6 +29,9 @@ const ToolboxDetail = () => {
   );
 
 
+
+
+
   const getLocalDateString = () => {
   const now = new Date();
 
@@ -381,12 +384,13 @@ const confirmDoneChecking = async () => {
   return (
     <section className="w-full max-w-5xl px-4 py-8">
       <div className=" flex items-center justify-between ">
-        <div className="">
+        <div className="flex flex-col gap-1">
           <h2 className="text-[3em] font-bold text-secondary">
             {selectedToolbox ? `Caja ${selectedToolbox.code}` : "Detalles de la caja"}
           </h2>
           {selectedToolbox && <p className="text-[1.8em] font-bold text-muted">Usado por : {selectedToolbox.name}</p>}
-          <p className="mt-2 text-lg text-slate-600">
+          {selectedToolbox && <p className="text-[1.2em] font-bold text-muted">Última revisión: : {selectedToolbox.verified_at}</p>}
+          <p className=" text-lg text-slate-600">
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
           <p className="text-[1.5em] font-bold text-muted">
