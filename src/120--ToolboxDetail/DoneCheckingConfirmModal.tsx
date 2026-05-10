@@ -4,7 +4,7 @@ import Signature from "./Signature";
 interface DoneCheckingConfirmModalProps {
   uncheckedCount: number;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (signatureDataUrl: string) => void | Promise<void>;
 }
 
 const DoneCheckingConfirmModal = ({
@@ -15,7 +15,6 @@ const DoneCheckingConfirmModal = ({
 
 
 const [firstStepConfirmed, setFirstStepConfirmed] = useState(false);
-const [secondStepConfirmed, setSecondStepConfirmed] = useState(false);
 const [signatureDataUrl, setSignatureDataUrl] = useState("");
 
 
@@ -61,11 +60,10 @@ const [signatureDataUrl, setSignatureDataUrl] = useState("");
          </>
 }
 {
-  firstStepConfirmed && !secondStepConfirmed &&
+  firstStepConfirmed &&
   <Signature
     onConfirm={onConfirm}
     onCancel={onCancel}
-    setSecondStepConfirmed={setSecondStepConfirmed}
     signatureDataUrl={signatureDataUrl}
     setSignatureDataUrl={setSignatureDataUrl}
   />

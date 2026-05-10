@@ -6,6 +6,7 @@ export interface ToolBox {
   code: string;
   inventory_done: boolean;
   verified_at: string | null;
+  signature_key: string | null;
 }
 
 export interface ToolboxCheckSummary {
@@ -61,8 +62,13 @@ export interface ToolBoxesContextType {
     update: {
       inventory_done: boolean;
       verified_at: string | null;
+      signature_key?: string | null;
     },
   ) => Promise<void>;
+  uploadToolboxSignature: (
+    toolboxId: number,
+    signatureBase64: string,
+  ) => Promise<{ signature_key: string }>;
   updateToolboxItem: (
     toolboxId: number,
     itemId: number,

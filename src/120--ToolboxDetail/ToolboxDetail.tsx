@@ -15,6 +15,7 @@ const ToolboxDetail = () => {
     fetchToolboxItems,
     updateToolboxItem,
     updateToolboxInventoryStatus,
+    uploadToolboxSignature,
   } = useToolBoxes();
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
@@ -365,16 +366,18 @@ const ToolboxDetail = () => {
     }
   };
 
-const confirmDoneChecking = async () => {
+const confirmDoneChecking = async (signatureDataUrl: string) => {
   if (!toolboxId) return;
 
   try {
+    const { signature_key } = await uploadToolboxSignature(Number(toolboxId), signatureDataUrl);
+
     await updateToolboxInventoryStatus(Number(toolboxId), {
       inventory_done: true,
       verified_at: getLocalDateString(),
+      signature_key,
     });
 
-    setShowDoneConfirmModal(false);
     setDoneChecking(true);
   } catch (error) {
     console.error("Error marking toolbox inventory as done:", error);
@@ -411,6 +414,7 @@ const startNewVerification = async () => {
     await updateToolboxInventoryStatus(Number(toolboxId), {
       inventory_done: false,
       verified_at: selectedToolbox.verified_at,
+      signature_key: null,
     });
 
     // Local optimistic reset

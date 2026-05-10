@@ -81,7 +81,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
 const updateToolboxInventoryStatus = useCallback(
   async (
     toolboxId: number,
-    update: { inventory_done: boolean; verified_at: string | null },
+    update: { inventory_done: boolean; verified_at: string | null; signature_key?: string | null },
   ) => {
     await fetchWithAuth(`/toolboxes/${toolboxId}`, {
       method: 'PATCH',
@@ -98,6 +98,18 @@ const updateToolboxInventoryStatus = useCallback(
   },
   [],
 );
+
+  const uploadToolboxSignature = useCallback(
+    async (toolboxId: number, signatureBase64: string) => {
+      return fetchWithAuth<{ signature_key: string }>(`/toolboxes/${toolboxId}/signature`, {
+        method: 'POST',
+        body: {
+          signatureBase64,
+        },
+      });
+    },
+    [],
+  );
 
   const updateToolboxItem = useCallback(
     async (
@@ -169,6 +181,7 @@ const updateToolboxInventoryStatus = useCallback(
     fetchToolBoxes,
     fetchToolboxItems,
     updateToolboxInventoryStatus,
+    uploadToolboxSignature,
     updateToolboxItem,
     loading,
     error,
