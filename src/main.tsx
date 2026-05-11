@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { ToolBoxesProvider } from './Contexts/ToolBoxesContext/ToolBoxesContextProvider'
 import ToolBoxesList from './110--ToolBoxesList/ToolBoxesList'
 import ToolboxDetail from './120--ToolboxDetail/ToolboxDetail'
+import LastVerification from './130--LastVerification/LastVerification'
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
       },
     ]
   },
+  {
+    path: "/verification/:toolboxId",
+    element: <LastVerification />
+  }
 ])
 
 createRoot(document.getElementById('root')!).render(
