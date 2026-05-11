@@ -6,6 +6,7 @@ import {
   type ToolboxCheckSummary,
   type ToolboxInventoryItem,
   type ToolBoxesContextType,
+  type ToolboxVerification,
 } from './ToolBoxesContext';
 
 interface ToolBoxesProviderProps {
@@ -20,6 +21,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
   const [toolboxItems, setToolboxItems] = useState<ToolboxInventoryItem[]>([]);
   const [toolboxItemsLoading, setToolboxItemsLoading] = useState(false);
   const [toolboxItemsError, setToolboxItemsError] = useState<string | null>(null);
+  const [currentVerification, setCurrentVerification] = useState<ToolboxVerification | null>(null);
 
   const fetchToolBoxes = useCallback(async () => {
     setLoading(true);
@@ -172,6 +174,18 @@ const updateToolboxInventoryStatus = useCallback(
     [toolboxItems],
   );
 
+
+    const fetchVerification = useCallback(async (toolboxId: number) => {
+    try {
+      const res : ToolboxVerification =await fetchWithAuth(`/toolboxes/${toolboxId}/verification`);
+
+      setCurrentVerification(res);
+      
+    } catch (err) {
+      console.error('Error al verificar las cajas de herramientas', err);
+    }
+  },[]);
+
   const value: ToolBoxesContextType = {
     toolBoxes,
     toolboxCheckSummaryById,
@@ -180,12 +194,16 @@ const updateToolboxInventoryStatus = useCallback(
     toolboxItemsError,
     fetchToolBoxes,
     fetchToolboxItems,
+    fetchVerification,
+    currentVerification,
     updateToolboxInventoryStatus,
     uploadToolboxSignature,
     updateToolboxItem,
     loading,
     error,
   };
+
+
 
   return (
     <ToolBoxesContext.Provider value={value}>

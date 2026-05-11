@@ -48,6 +48,16 @@ export interface ToolboxInventoryItem {
 }
 
 
+export interface ToolboxVerification {
+  toolbox_id: number;
+  verified_at: string | null;
+  signature_url: string | null;
+  checked_items: boolean;
+  total_items: boolean;
+  completion_percentage: number;
+}
+
+
 
 export interface ToolBoxesContextType {
   toolBoxes: ToolBox[];
@@ -57,6 +67,8 @@ export interface ToolBoxesContextType {
   toolboxItemsError: string | null;
   fetchToolBoxes: () => Promise<void>;
   fetchToolboxItems: (toolboxId: number) => Promise<void>;
+  fetchVerification: (toolboxId: number) => Promise<void>;
+  currentVerification: ToolboxVerification | null;
     updateToolboxInventoryStatus: (
     toolboxId: number,
     update: {
@@ -65,6 +77,7 @@ export interface ToolBoxesContextType {
       signature_key?: string | null;
     },
   ) => Promise<void>;
+
   uploadToolboxSignature: (
     toolboxId: number,
     signatureBase64: string,
