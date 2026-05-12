@@ -57,7 +57,8 @@ const ToolBoxesList = () => {
                 </div>
                 </div>
                 <div className="flex justify-around w-full">
-                 {toolbox.inventory_done && <Link to={`/verification/${toolbox.id}`} className="text-[1.1em] font-semibold text-secondary">Última revisión: {toolbox.verified_at ? (toolbox.verified_at).slice(0, 10) : "-" }</Link>} 
+                 {toolbox.inventory_done && <Link to={`/verification/${toolbox.id}`} className="flex items-center text-[1.1em] underline font-semibold text-secondary">Última revisión: {toolbox.verified_at ? (toolbox.verified_at).slice(0, 10) : "-" }
+                 <ChevronRight className=" text-secondary strokeWidth={3}" size={18}/></Link>} 
                 <p className="text-[1.1em] font-semibold text-secondary">
                   Herramientas verificadas :{" "}
                   {toolboxCheckSummaryById[toolbox.id]

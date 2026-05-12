@@ -22,6 +22,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
   const [toolboxItemsLoading, setToolboxItemsLoading] = useState(false);
   const [toolboxItemsError, setToolboxItemsError] = useState<string | null>(null);
   const [currentVerification, setCurrentVerification] = useState<ToolboxVerification | null>(null);
+  const [verificationLoading, setVerificationLoading] = useState(false);
 
   const fetchToolBoxes = useCallback(async () => {
     setLoading(true);
@@ -176,10 +177,15 @@ const updateToolboxInventoryStatus = useCallback(
 
 
     const fetchVerification = useCallback(async (toolboxId: number) => {
+
+      setVerificationLoading(true);
+
     try {
       const res : ToolboxVerification =await fetchWithAuth(`/toolboxes/${toolboxId}/verification`);
 
       setCurrentVerification(res);
+
+      setVerificationLoading(false);
       
     } catch (err) {
       console.error('Error al verificar las cajas de herramientas', err);
@@ -199,6 +205,7 @@ const updateToolboxInventoryStatus = useCallback(
     updateToolboxInventoryStatus,
     uploadToolboxSignature,
     updateToolboxItem,
+    verificationLoading,
     loading,
     error,
   };

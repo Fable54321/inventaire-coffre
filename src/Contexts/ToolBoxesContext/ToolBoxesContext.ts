@@ -77,7 +77,7 @@ export interface ToolBoxesContextType {
       signature_key?: string | null;
     },
   ) => Promise<void>;
-
+verificationLoading: boolean;
   uploadToolboxSignature: (
     toolboxId: number,
     signatureBase64: string,

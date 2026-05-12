@@ -6,7 +6,7 @@ import { useEffect } from "react";
 const LastVerification = () => {
 
   const { toolboxId } = useParams<{ toolboxId: string }>();
-  const { fetchVerification, currentVerification, toolBoxes } = useToolBoxes();
+  const { fetchVerification, currentVerification, toolBoxes, verificationLoading } = useToolBoxes();
 
 
   const currentToolbox = toolBoxes.find(toolbox => toolbox.id === Number(toolboxId));
@@ -35,6 +35,7 @@ const LastVerification = () => {
           <h2 className="font-bold font-[inter] text-[2em] text-secondary text-center" >usado por: {currentToolbox.name}</h2>
           </div>
         )}
+        {verificationLoading && <p>Cargando...</p>}
       {currentVerification && (
         <>
         <p className=" text-[1.7em]">Verificado el: {currentVerification.verified_at?.slice(0, 10)}</p>
