@@ -34,7 +34,7 @@ const ToolBoxesList = () => {
       </div>
       {loading && <p>Cargando...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
-      <ul className="flex flex-col gap-2 mt-5 w-[min(750px,98%)] mx-auto">
+      <ul className="flex flex-col gap-2 mt-5 w-[min(750px,98%)] mx-auto mb-5">
         {toolBoxes
         .sort((a, b) => {
           const nameA = `Caja: ${a.code}`;
