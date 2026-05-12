@@ -528,11 +528,11 @@ const startNewVerification = async () => {
                         className="flex min-w-0 flex-1 items-center justify-between text-left"
                       >
 
-                        <div className="flex flex-col gap-2">
-                        <span className="flex text-[0.8em] items-center gap-2">
-                          <span className="w-[80%]">Grupo: {group.groupName}</span>
-                          <span>({getGroupCheckedCount(group.items)} / {group.items.length})</span>
-                        </span>
+                        <div className="flex min-w-0 flex-1 flex-col gap-2 ">
+                        <div className="flex min-w-0 text-[0.8em] items-center gap-2 w-full">
+                          <p className="min-w-0 max-w-[70%] flex-1">Grupo: {group.groupName}</p>
+                          <p className="shrink-0 whitespace-nowrap">({getGroupCheckedCount(group.items)} / {group.items.length})</p>
+                        </div>
                         <div className="flex text-[0.8em] items-center gap-3 ">
                           <p>{groupComplete ? "DESMARCAR TODO EL GRUPO :" : "MARCAR TODO EL GRUPO :"}</p>
                          
@@ -551,7 +551,7 @@ const startNewVerification = async () => {
                       </div>
                       
                       </div>
-                      {groupComplete && <span className="text-green-600 ml-auto mr-15 text-[1.5em] inline ">✓</span>}
+                      {groupComplete && <p className="text-green-600 ml-auto mr-15 text-[1.5em]   ">✓</p>}
                         <span className="text-2xl">{groupOpen ? <ChevronUp /> : <ChevronDown />}</span>
                        
                       </button>
