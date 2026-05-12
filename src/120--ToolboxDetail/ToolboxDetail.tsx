@@ -530,7 +530,7 @@ const startNewVerification = async () => {
 
                         <div className="flex flex-col gap-2">
                         <span className="flex text-[0.8em] items-center gap-2">
-                          <span>Grupo: {group.groupName}</span>
+                          <span className="w-[80%]">Grupo: {group.groupName}</span>
                           <span>({getGroupCheckedCount(group.items)} / {group.items.length})</span>
                         </span>
                         <div className="flex text-[0.8em] items-center gap-3 ">
