@@ -44,7 +44,7 @@ const ToolBoxesList = () => {
         .map((toolbox) => (
           <li key={toolbox.id} className="">
             <Link to={`/toolbox/${toolbox.id}`} className="flex flex-col gap-3 items-center bg-[#f4fdf1] rounded-lg p-4 relative" style={{ boxShadow: "-2px 2px 24px 0px rgba(0,0,0,0.4)" }}>
-              <div className="flex gap-10 items-center">
+              <div className="flex gap-10 items-center justify-between w-[90%]">
               <div className="p-1 px-2 rounded-lg bg-primary">
                 <img src={toolbox_icon} alt="Toolbox" className="w-10 h-10" />
               </div>
