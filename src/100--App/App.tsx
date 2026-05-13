@@ -7,7 +7,7 @@ import { useEffect } from "react";
 function App() {
 
 
-  const { user, } = usePersistentAuth();
+  const { user } = usePersistentAuth();
 
 
   useEffect(() => {

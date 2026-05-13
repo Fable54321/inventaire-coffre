@@ -50,6 +50,34 @@ export const PersistentAuthProvider = ({
     window.location.replace("https://vegibec-portail.com/");
   };
 
+
+
+ const createPersistentSession = useCallback(async () => {
+  try {
+    setError(null);
+
+    const res = await fetch(
+      `${API_BASE_URL}/auth/create-toolbox-device-session`,
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
+
+    if (!res.ok) {
+      setError("Impossible de créer la session persistante");
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("createPersistentSession error:", err);
+    setError("Erreur lors de la création de la session persistante");
+    return false;
+  }
+}, []);
+
+
 const checkAuth = useCallback(async () => {
   try {
     setLoading(true);
@@ -66,8 +94,10 @@ const checkAuth = useCallback(async () => {
     }
 
     const data = await res.json();
-
     setUser(data.user);
+
+    await createPersistentSession();
+
     return true;
   } catch (err) {
     console.error("checkAuth error:", err);
@@ -77,33 +107,7 @@ const checkAuth = useCallback(async () => {
   } finally {
     setLoading(false);
   }
-}, []);
-
-  const createPersistentSession = async () => {
-    try {
-      setError(null);
-
-      const res = await fetch(
-        `${API_BASE_URL}/auth/create-toolbox-device-session`,
-        {
-          method: "POST",
-          credentials: "include",
-        },
-      );
-
-      if (!res.ok) {
-        setError("Impossible de créer la session persistante");
-        return false;
-      }
-
-      await checkAuth();
-      return true;
-    } catch (err) {
-      console.error("createPersistentSession error:", err);
-      setError("Erreur lors de la création de la session persistante");
-      return false;
-    }
-  };
+}, [createPersistentSession]);
 
  useEffect(() => {
   const timeoutId = window.setTimeout(() => {
