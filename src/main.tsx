@@ -7,25 +7,42 @@ import { ToolBoxesProvider } from './Contexts/ToolBoxesContext/ToolBoxesContextP
 import ToolBoxesList from './110--ToolBoxesList/ToolBoxesList'
 import ToolboxDetail from './120--ToolboxDetail/ToolboxDetail'
 import LastVerification from './130--LastVerification/LastVerification'
+import ProtectedRoute from './Components/ProtectedRoute'
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: (
+      <ProtectedRoute>
+        <App />
+    </ProtectedRoute>
+  ),
     children: [
       {
         path: "/",
-        element: <ToolBoxesList />,
+        element:( 
+        <ProtectedRoute>
+        <ToolBoxesList />
+        </ProtectedRoute>
+      ),
       },
       {
         path: "toolbox/:toolboxId",
-        element: <ToolboxDetail />,
+        element:( 
+          <ProtectedRoute>
+        <ToolboxDetail />
+        </ProtectedRoute>
+        ),
       },
     ]
   },
   {
     path: "/verification/:toolboxId",
-    element: <LastVerification />
+    element: (
+      <ProtectedRoute>
+    <LastVerification />
+    </ProtectedRoute>
+  )
   }
 ])
 
