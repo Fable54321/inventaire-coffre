@@ -83,14 +83,28 @@ const checkAuth = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const res = await fetch(`${API_BASE_URL}/alternative-auth/persistent/me`, {
+    let res = await fetch(`${API_BASE_URL}/alternative-auth/persistent/me`, {
       method: "GET",
       credentials: "include",
     });
 
     if (!res.ok) {
-      setUser(null);
-      return false;
+      const sessionCreated = await createPersistentSession();
+
+      if (!sessionCreated) {
+        setUser(null);
+        return false;
+      }
+
+      res = await fetch(`${API_BASE_URL}/alternative-auth/persistent/me`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setUser(null);
+        return false;
+      }
     }
 
     const data = await res.json();

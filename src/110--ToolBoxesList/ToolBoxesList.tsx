@@ -21,7 +21,7 @@ const ToolBoxesList = () => {
 
   
 
-  console.log(typeof sortMap["Caja: 26-11"], typeof sortMap["Caja: 26-12"]);
+
 
   
   return (
