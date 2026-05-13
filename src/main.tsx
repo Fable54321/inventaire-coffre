@@ -8,6 +8,7 @@ import ToolBoxesList from './110--ToolBoxesList/ToolBoxesList'
 import ToolboxDetail from './120--ToolboxDetail/ToolboxDetail'
 import LastVerification from './130--LastVerification/LastVerification'
 import ProtectedRoute from './Components/ProtectedRoute'
+import { PersistentAuthProvider } from './Contexts/AuthContext/AuthContext'
 
 const router = createBrowserRouter([
   {
@@ -48,8 +49,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <PersistentAuthProvider>
     <ToolBoxesProvider>
       <RouterProvider router={router} />
     </ToolBoxesProvider>
+    </PersistentAuthProvider>
   </StrictMode>,
 )
