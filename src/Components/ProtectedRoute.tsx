@@ -10,11 +10,11 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   useEffect(() => {
     if (loading) return;
 
-    if (!user || !hasAccess) {
-      alert("Vous n'avez pas les permissions nécessaires pour accéder à cette application.");
-      window.location.replace("https://vegibec-portail.com/");
-      return;
-    }
+    // if (!user || !hasAccess) {
+    //   alert("Vous n'avez pas les permissions nécessaires pour accéder à cette application.");
+    //   window.location.replace("https://vegibec-portail.com/");
+    //   return;
+    // }
 
     
   }, [user, loading, hasAccess]);
