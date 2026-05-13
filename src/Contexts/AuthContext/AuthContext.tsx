@@ -57,7 +57,7 @@ export const PersistentAuthProvider = ({
     setError(null);
 
     const res = await fetch(
-      `${API_BASE_URL}/auth/create-toolbox-device-session`,
+      `${API_BASE_URL}/alternative-auth/create-toolbox-device-session`,
       {
         method: "POST",
         credentials: "include",
@@ -83,7 +83,7 @@ const checkAuth = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const res = await fetch(`${API_BASE_URL}/auth/persistent/me`, {
+    const res = await fetch(`${API_BASE_URL}/alternative-auth/persistent/me`, {
       method: "GET",
       credentials: "include",
     });
