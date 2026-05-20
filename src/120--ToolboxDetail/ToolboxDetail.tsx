@@ -28,6 +28,7 @@ const ToolboxDetail = () => {
   const [showDoneConfirmModal, setShowDoneConfirmModal] = useState(false);
   const [showStartNewConfirmModal, setShowStartNewConfirmModal] = useState(false);
   const [startingNewVerification, setStartingNewVerification] = useState(false);
+  const [showNonOkOnly, setShowNonOkOnly] = useState(false);
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
@@ -270,8 +271,16 @@ const ToolboxDetail = () => {
     ? toolBoxes.find((toolbox) => toolbox.id === Number(toolboxId))
     : undefined;
 
+  const itemsWithNonOkStatus = useMemo(
+    () =>
+      toolboxItems.filter((item) => (item.status ?? "").trim().toLowerCase() !== "ok"),
+    [toolboxItems],
+  );
+
+  const visibleToolboxItems = showNonOkOnly ? itemsWithNonOkStatus : toolboxItems;
+
   const groupedItems = useMemo(() => {
-    return toolboxItems.reduce((acc, item) => {
+    return visibleToolboxItems.reduce((acc, item) => {
       const sectionKey = `${item.section_id}:${item.section_name}`;
       const groupKey = item.group_id != null ? `${sectionKey}:${item.group_id}:${item.group_name}` : `${sectionKey}:no-group`;
 
@@ -301,7 +310,7 @@ const ToolboxDetail = () => {
         groups: Record<string, { groupName: string; items: typeof toolboxItems[number][] }>;
       }
     >);
-  }, [toolboxItems]);
+  }, [visibleToolboxItems]);
 
   const isGroupComplete = (groupItems: typeof toolboxItems[number][]) =>
     groupItems.every((item) => checkedItems.has(item.item_id));
@@ -328,12 +337,8 @@ const ToolboxDetail = () => {
 
   const allSectionsComplete = useMemo(
     () =>
-      Object.values(groupedItems).every((section) =>
-        Object.values(section.groups).every((group) =>
-          group.items.every((item) => checkedItems.has(item.item_id))
-        )
-      ),
-    [groupedItems, checkedItems]
+      toolboxItems.every((item) => checkedItems.has(item.item_id)),
+    [toolboxItems, checkedItems]
   );
 
   const toggleSection = (sectionKey: string) => {
@@ -460,6 +465,15 @@ const startNewVerification = async () => {
           <p className="text-[1.5em] font-bold text-muted">
             recuento total: {getCheckedCount()} / {toolboxItems.length}
           </p>
+          <label className="mt-3 flex w-fit items-center gap-3 rounded-md border border-secondary/30 bg-white px-4 py-3 text-[1.15em] font-bold text-secondary shadow-sm hover:cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showNonOkOnly}
+              onChange={(event) => setShowNonOkOnly(event.target.checked)}
+              className="h-6 w-6 accent-secondary"
+            />
+            <span>Mostrar solo estado distinto de OK ({itemsWithNonOkStatus.length})</span>
+          </label>
         </div> 
         <div className="flex-1 flex flex-col items-center justify-center hover:cursor-pointer">
         
@@ -483,6 +497,9 @@ const startNewVerification = async () => {
       {toolboxItemsError && <p className="text-red-500">Error : {toolboxItemsError}</p>}
       {!toolboxItemsLoading && !toolboxItemsError && toolboxItems.length === 0 && (
         <p>No se encontraron artículos para esta caja.</p>
+      )}
+      {!toolboxItemsLoading && !toolboxItemsError && showNonOkOnly && visibleToolboxItems.length === 0 && (
+        <p className="text-lg font-semibold text-green-700">No hay herramientas con estado distinto de OK.</p>
       )}
 
       {!toolboxItemsLoading && !toolboxItemsError &&  Object.entries(groupedItems).map(([sectionKey, section]) => {
