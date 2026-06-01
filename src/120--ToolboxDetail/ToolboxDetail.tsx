@@ -663,7 +663,7 @@ const startNewVerification = async () => {
         </button>}
  
 
-      {toolboxItemsLoading && <p>Cargando artículos...</p>}
+      {toolboxItemsLoading && toolboxItems.length === 0 && <p>Cargando artículos...</p>}
       {toolboxItemsError && <p className="text-red-500">Error : {toolboxItemsError}</p>}
       {!toolboxItemsLoading && !toolboxItemsError && toolboxItems.length === 0 && (
         <p>No se encontraron artículos para esta caja.</p>
@@ -672,7 +672,7 @@ const startNewVerification = async () => {
         <p className="text-lg font-semibold text-green-700">No hay herramientas con estado distinto de OK.</p>
       )}
 
-      {!toolboxItemsLoading && !toolboxItemsError &&  Object.entries(groupedItems).map(([sectionKey, section]) => {
+      {!toolboxItemsError &&  Object.entries(groupedItems).map(([sectionKey, section]) => {
         const sectionOpen = openSections.has(sectionKey);
         const sectionComplete = isSectionComplete(section);
         return (
