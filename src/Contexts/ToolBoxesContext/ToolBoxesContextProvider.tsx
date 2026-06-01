@@ -3,7 +3,9 @@ import { fetchWithAuth } from '../../Utils/fetchWithAuth';
 import {
   ToolBoxesContext,
   type ToolBox,
+  type AddToolboxItemInput,
   type ToolboxCheckSummary,
+  type ToolboxGroup,
   type ToolboxInventoryItem,
   type ToolBoxesContextType,
   type ToolboxVerification,
@@ -175,6 +177,65 @@ const updateToolboxInventoryStatus = useCallback(
     [toolboxItems],
   );
 
+  const addToolboxItemToGroup = useCallback(
+    async (
+      toolboxId: number,
+      sectionId: number,
+      groupId: number | null,
+      item: AddToolboxItemInput,
+    ) => {
+      const groupIdParam = groupId === null ? 'null' : String(groupId);
+
+      await fetchWithAuth(`/toolboxes/${toolboxId}/sections/${sectionId}/groups/${groupIdParam}/items`, {
+        method: 'POST',
+        body: { ...item },
+      });
+
+      setToolboxCheckSummaryById((prev) => {
+        const currentSummary = prev[toolboxId];
+
+        if (!currentSummary) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          [toolboxId]: {
+            checked: currentSummary.checked + (item.is_checked ? 1 : 0),
+            total: currentSummary.total + 1,
+          },
+        };
+      });
+
+      await fetchToolboxItems(toolboxId);
+    },
+    [fetchToolboxItems],
+  );
+
+  const addToolboxGroup = useCallback(
+    async (
+      toolboxId: number,
+      sectionId: number,
+      group: {
+        name: string;
+        position_order?: number | null;
+      },
+    ) => {
+      const response = await fetchWithAuth<{ group: ToolboxGroup }>(
+        `/toolboxes/${toolboxId}/sections/${sectionId}/groups`,
+        {
+          method: 'POST',
+          body: { ...group },
+        },
+      );
+
+      await fetchToolboxItems(toolboxId);
+
+      return response.group;
+    },
+    [fetchToolboxItems],
+  );
+
 
     const fetchVerification = useCallback(async (toolboxId: number) => {
 
@@ -205,6 +266,8 @@ const updateToolboxInventoryStatus = useCallback(
     updateToolboxInventoryStatus,
     uploadToolboxSignature,
     updateToolboxItem,
+    addToolboxItemToGroup,
+    addToolboxGroup,
     verificationLoading,
     loading,
     error,

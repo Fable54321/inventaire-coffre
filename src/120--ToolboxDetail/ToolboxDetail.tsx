@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
+import type { ToolboxInventoryItem } from "../Contexts/ToolBoxesContext/ToolBoxesContext";
 import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X, ArrowLeftToLine } from "lucide-react";
 import StartNewVerificationConfirmModal from "./StartNewVerificationConfirmModal";
 import DoneCheckingConfirmModal from "./DoneCheckingConfirmModal";
+
+type GroupedToolboxGroup = {
+  sectionId: number;
+  groupId: number | null;
+  groupName: string;
+  groupOrder: number | null;
+  items: ToolboxInventoryItem[];
+};
 
 const ToolboxDetail = () => {
   const { toolboxId } = useParams<{ toolboxId: string }>();
@@ -14,6 +23,8 @@ const ToolboxDetail = () => {
     toolboxItemsError,
     fetchToolboxItems,
     updateToolboxItem,
+    addToolboxItemToGroup,
+    addToolboxGroup,
     updateToolboxInventoryStatus,
     uploadToolboxSignature,
   } = useToolBoxes();
@@ -29,6 +40,21 @@ const ToolboxDetail = () => {
   const [showStartNewConfirmModal, setShowStartNewConfirmModal] = useState(false);
   const [startingNewVerification, setStartingNewVerification] = useState(false);
   const [showNonOkOnly, setShowNonOkOnly] = useState(false);
+  const [activeAddGroupKey, setActiveAddGroupKey] = useState<string | null>(null);
+  const [addToolDraft, setAddToolDraft] = useState({
+    raw_description: "",
+    expected_quantity: "1",
+    actual_quantity: "",
+    status: "OK",
+    status_note: "",
+  });
+  const [addingTool, setAddingTool] = useState(false);
+  const [addToolError, setAddToolError] = useState<string | null>(null);
+  const [activeAddGroupSectionKey, setActiveAddGroupSectionKey] = useState<string | null>(null);
+  const [addGroupName, setAddGroupName] = useState("");
+  const [addingGroup, setAddingGroup] = useState(false);
+  const [addGroupError, setAddGroupError] = useState<string | null>(null);
+  const [createdGroupsBySectionKey, setCreatedGroupsBySectionKey] = useState<Record<string, GroupedToolboxGroup[]>>({});
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
@@ -280,12 +306,13 @@ const ToolboxDetail = () => {
   const visibleToolboxItems = showNonOkOnly ? itemsWithNonOkStatus : toolboxItems;
 
   const groupedItems = useMemo(() => {
-    return visibleToolboxItems.reduce((acc, item) => {
+    const grouped = visibleToolboxItems.reduce((acc, item) => {
       const sectionKey = `${item.section_id}:${item.section_name}`;
       const groupKey = item.group_id != null ? `${sectionKey}:${item.group_id}:${item.group_name}` : `${sectionKey}:no-group`;
 
       if (!acc[sectionKey]) {
         acc[sectionKey] = {
+          sectionId: item.section_id,
           sectionName: item.section_name,
           sectionType: item.section_type,
           groups: {},
@@ -295,7 +322,10 @@ const ToolboxDetail = () => {
       const section = acc[sectionKey];
       if (!section.groups[groupKey]) {
         section.groups[groupKey] = {
+          sectionId: item.section_id,
+          groupId: item.group_id,
           groupName: item.group_name || "Sin grupo",
+          groupOrder: item.group_order,
           items: [],
         };
       }
@@ -305,15 +335,37 @@ const ToolboxDetail = () => {
     }, {} as Record<
       string,
       {
+        sectionId: number;
         sectionName: string;
         sectionType: string | null;
-        groups: Record<string, { groupName: string; items: typeof toolboxItems[number][] }>;
+        groups: Record<string, GroupedToolboxGroup>;
       }
     >);
-  }, [visibleToolboxItems]);
+
+    Object.entries(createdGroupsBySectionKey).forEach(([sectionKey, createdGroups]) => {
+      const section = grouped[sectionKey];
+
+      if (!section) {
+        return;
+      }
+
+      createdGroups.forEach((group) => {
+        const groupKey = `${sectionKey}:${group.groupId}:${group.groupName}`;
+        const groupAlreadyExists = Object.values(section.groups).some(
+          (existingGroup) => existingGroup.groupId === group.groupId,
+        );
+
+        if (!groupAlreadyExists) {
+          section.groups[groupKey] = group;
+        }
+      });
+    });
+
+    return grouped;
+  }, [visibleToolboxItems, createdGroupsBySectionKey]);
 
   const isGroupComplete = (groupItems: typeof toolboxItems[number][]) =>
-    groupItems.every((item) => checkedItems.has(item.item_id));
+    groupItems.length > 0 && groupItems.every((item) => checkedItems.has(item.item_id));
 
   const getGroupCheckedCount = (groupItems: typeof toolboxItems[number][]) =>
     groupItems.filter((item) => checkedItems.has(item.item_id)).length;
@@ -331,13 +383,11 @@ const ToolboxDetail = () => {
 
 
   const isSectionComplete = (section: typeof groupedItems[string]) =>
-    Object.values(section.groups).every((group) =>
-      group.items.every((item) => checkedItems.has(item.item_id))
-    );
+    getSectionTotalCount(section) > 0 && Object.values(section.groups).every((group) => isGroupComplete(group.items));
 
   const allSectionsComplete = useMemo(
     () =>
-      toolboxItems.every((item) => checkedItems.has(item.item_id)),
+      toolboxItems.length > 0 && toolboxItems.every((item) => checkedItems.has(item.item_id)),
     [toolboxItems, checkedItems]
   );
 
@@ -363,6 +413,126 @@ const ToolboxDetail = () => {
       }
       return next;
     });
+  };
+
+  const openAddToolForm = (groupKey: string) => {
+    setActiveAddGroupKey((currentGroupKey) => (currentGroupKey === groupKey ? null : groupKey));
+    setAddToolError(null);
+  };
+
+  const openAddGroupForm = (sectionKey: string) => {
+    setActiveAddGroupSectionKey((currentSectionKey) => (currentSectionKey === sectionKey ? null : sectionKey));
+    setAddGroupError(null);
+  };
+
+  const submitNewGroup = async (sectionKey: string, section: typeof groupedItems[string]) => {
+    if (!toolboxId) return;
+
+    const name = addGroupName.trim();
+
+    if (name === "") {
+      setAddGroupError("El nombre del grupo es obligatorio.");
+      return;
+    }
+
+    try {
+      setAddingGroup(true);
+      setAddGroupError(null);
+
+      const createdGroup = await addToolboxGroup(Number(toolboxId), section.sectionId, { name });
+      const groupKey = `${sectionKey}:${createdGroup.id}:${createdGroup.name}`;
+
+      setCreatedGroupsBySectionKey((prev) => ({
+        ...prev,
+        [sectionKey]: [
+          ...(prev[sectionKey] ?? []),
+          {
+            sectionId: createdGroup.section_id,
+            groupId: createdGroup.id,
+            groupName: createdGroup.name,
+            groupOrder: createdGroup.position_order,
+            items: [],
+          },
+        ],
+      }));
+      setOpenGroups((prev) => new Set(prev).add(groupKey));
+      setAddGroupName("");
+      setActiveAddGroupSectionKey(null);
+    } catch (error) {
+      console.error("Error adding toolbox group:", error);
+      setAddGroupError(error instanceof Error ? error.message : "No se pudo agregar el grupo.");
+    } finally {
+      setAddingGroup(false);
+    }
+  };
+
+  const submitNewTool = async (groupKey: string, group: GroupedToolboxGroup) => {
+    if (!toolboxId) return;
+
+    const rawDescription = addToolDraft.raw_description.trim();
+    const expectedQuantity = Number(addToolDraft.expected_quantity);
+    const actualQuantity =
+      addToolDraft.actual_quantity.trim() === "" ? null : Number(addToolDraft.actual_quantity);
+
+    if (rawDescription === "") {
+      setAddToolError("La descripcion es obligatoria.");
+      return;
+    }
+
+    if (!Number.isFinite(expectedQuantity) || expectedQuantity < 0) {
+      setAddToolError("La cantidad esperada debe ser 0 o más.");
+      return;
+    }
+
+    if (actualQuantity !== null && (!Number.isFinite(actualQuantity) || actualQuantity < 0)) {
+      setAddToolError("La cantidad real debe ser 0 o más.");
+      return;
+    }
+
+    try {
+      setAddingTool(true);
+      setAddToolError(null);
+
+      await addToolboxItemToGroup(
+        Number(toolboxId),
+        group.sectionId,
+        group.groupId,
+        {
+          raw_description: rawDescription,
+          expected_quantity: expectedQuantity,
+          actual_quantity: actualQuantity,
+          status: addToolDraft.status.trim() || null,
+          status_note: addToolDraft.status_note.trim() || null,
+          is_checked: false,
+        },
+      );
+
+      setAddToolDraft({
+        raw_description: "",
+        expected_quantity: "1",
+        actual_quantity: "",
+        status: "OK",
+        status_note: "",
+      });
+      setActiveAddGroupKey(null);
+      setOpenGroups((prev) => new Set(prev).add(groupKey));
+      if (group.groupId !== null) {
+        setCreatedGroupsBySectionKey((prev) => {
+          const next = { ...prev };
+
+          Object.entries(next).forEach(([sectionKey, createdGroups]) => {
+            next[sectionKey] = createdGroups.filter((createdGroup) => createdGroup.groupId !== group.groupId);
+          });
+
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("Error adding toolbox item:", error);
+      setAddToolError(error instanceof Error ? error.message : "No se pudo agregar la herramienta.");
+    } finally {
+      setAddingTool(false);
+    }
   };
 
   const handleDoneChecking = () => {
@@ -533,6 +703,49 @@ const startNewVerification = async () => {
 
             {sectionOpen && (
               <div className="space-y-3 p-4 rounded-b-lg" style={{ boxShadow: "0px 12px 24px 0px rgba(0,0,0,0.1)" }}>
+                <div className="rounded-lg border border-secondary/20 bg-white p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[0.8em] font-bold text-secondary">Grupos de la seccion</p>
+                    <button
+                      type="button"
+                      onClick={() => openAddGroupForm(sectionKey)}
+                      title="Agregar grupo"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md"
+                    >
+                      {activeAddGroupSectionKey === sectionKey ? <X size={24} /> : <Plus size={24} />}
+                    </button>
+                  </div>
+                  {activeAddGroupSectionKey === sectionKey && (
+                    <form
+                      className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        submitNewGroup(sectionKey, section);
+                      }}
+                    >
+                      <label className="flex flex-col gap-1 text-[0.7em] font-semibold text-secondary">
+                        Nombre del grupo
+                        <input
+                          type="text"
+                          value={addGroupName}
+                          onChange={(event) => setAddGroupName(event.target.value)}
+                          disabled={addingGroup}
+                          className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                          placeholder="Nuevo grupo"
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={addingGroup}
+                        className="mt-auto flex h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 text-[0.7em] font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Plus size={20} />
+                        Agregar grupo
+                      </button>
+                      {addGroupError && <p className="text-[0.7em] font-semibold text-red-500 sm:col-span-2">{addGroupError}</p>}
+                    </form>
+                  )}
+                </div>
                 {Object.entries(section.groups).map(([groupKey, group]) => {
                   const groupOpen = openGroups.has(groupKey);
                   const groupComplete = isGroupComplete(group.items);
@@ -572,8 +785,107 @@ const startNewVerification = async () => {
                         <span className="text-2xl">{groupOpen ? <ChevronUp /> : <ChevronDown />}</span>
                        
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => openAddToolForm(groupKey)}
+                        title="Agregar herramienta al grupo"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {activeAddGroupKey === groupKey ? <X size={24} /> : <Plus size={24} />}
+                      </button>
                    
                       </div>
+
+                      {activeAddGroupKey === groupKey && (
+                        <form
+                          className="mx-4 mb-4 grid gap-3 rounded-md border border-secondary/30 bg-white p-4 text-[0.75em] shadow-sm"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            submitNewTool(groupKey, group);
+                          }}
+                        >
+                          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem]">
+                            <label className="flex flex-col gap-1 font-semibold text-secondary">
+                              Herramienta
+                              <input
+                                type="text"
+                                value={addToolDraft.raw_description}
+                                onChange={(event) =>
+                                  setAddToolDraft((prev) => ({ ...prev, raw_description: event.target.value }))
+                                }
+                                disabled={addingTool}
+                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                placeholder="Descripcion"
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1 font-semibold text-secondary">
+                              Esperada
+                              <input
+                                type="number"
+                                min="0"
+                                inputMode="numeric"
+                                value={addToolDraft.expected_quantity}
+                                onChange={(event) =>
+                                  setAddToolDraft((prev) => ({ ...prev, expected_quantity: event.target.value }))
+                                }
+                                disabled={addingTool}
+                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1 font-semibold text-secondary">
+                              Real
+                              <input
+                                type="number"
+                                min="0"
+                                inputMode="numeric"
+                                value={addToolDraft.actual_quantity}
+                                onChange={(event) =>
+                                  setAddToolDraft((prev) => ({ ...prev, actual_quantity: event.target.value }))
+                                }
+                                disabled={addingTool}
+                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                placeholder="-"
+                              />
+                            </label>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto]">
+                            <label className="flex flex-col gap-1 font-semibold text-secondary">
+                              Estado
+                              <input
+                                type="text"
+                                value={addToolDraft.status}
+                                onChange={(event) =>
+                                  setAddToolDraft((prev) => ({ ...prev, status: event.target.value }))
+                                }
+                                disabled={addingTool}
+                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1 font-semibold text-secondary">
+                              Nota
+                              <input
+                                type="text"
+                                value={addToolDraft.status_note}
+                                onChange={(event) =>
+                                  setAddToolDraft((prev) => ({ ...prev, status_note: event.target.value }))
+                                }
+                                disabled={addingTool}
+                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                placeholder="Opcional"
+                              />
+                            </label>
+                            <button
+                              type="submit"
+                              disabled={addingTool}
+                              className="mt-auto flex h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <Plus size={20} />
+                              Agregar
+                            </button>
+                          </div>
+                          {addToolError && <p className="font-semibold text-red-500">{addToolError}</p>}
+                        </form>
+                      )}
                       
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">

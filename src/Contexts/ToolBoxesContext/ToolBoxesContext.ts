@@ -47,6 +47,24 @@ export interface ToolboxInventoryItem {
   tool_french_name: string | null;
 }
 
+export interface AddToolboxItemInput {
+  tool_variant_id?: number | null;
+  raw_description: string;
+  expected_quantity?: number | null;
+  actual_quantity?: number | null;
+  status?: string | null;
+  status_note?: string | null;
+  position_order?: number | null;
+  is_checked?: boolean | null;
+}
+
+export interface ToolboxGroup {
+  id: number;
+  section_id: number;
+  name: string;
+  position_order: number | null;
+}
+
 
 export interface ToolboxVerification {
   toolbox_id: number;
@@ -95,6 +113,20 @@ verificationLoading: boolean;
       trackCheckedChange?: boolean;
     },
   ) => Promise<void>;
+  addToolboxItemToGroup: (
+    toolboxId: number,
+    sectionId: number,
+    groupId: number | null,
+    item: AddToolboxItemInput,
+  ) => Promise<void>;
+  addToolboxGroup: (
+    toolboxId: number,
+    sectionId: number,
+    group: {
+      name: string;
+      position_order?: number | null;
+    },
+  ) => Promise<ToolboxGroup>;
 
   loading: boolean;
   error: string | null;
