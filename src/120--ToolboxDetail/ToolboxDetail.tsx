@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
 import type { ToolboxInventoryItem } from "../Contexts/ToolBoxesContext/ToolBoxesContext";
-import { ArrowDown, ArrowLeftToLine, ArrowUp, Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X } from "lucide-react";
+import { ArrowLeftToLine, Check, CheckCheck, ChevronDown, ChevronsRight, GripVertical, Minus, Plus, ChevronUp, X } from "lucide-react";
 import StartNewVerificationConfirmModal from "./StartNewVerificationConfirmModal";
 import DoneCheckingConfirmModal from "./DoneCheckingConfirmModal";
 
@@ -57,6 +57,8 @@ const ToolboxDetail = () => {
   const [addGroupError, setAddGroupError] = useState<string | null>(null);
   const [reorderingItemsByGroupKey, setReorderingItemsByGroupKey] = useState<Record<string, boolean>>({});
   const [reorderErrorByGroupKey, setReorderErrorByGroupKey] = useState<Record<string, string>>({});
+  const [draggedTool, setDraggedTool] = useState<{ groupKey: string; itemId: number } | null>(null);
+  const [dragOverTool, setDragOverTool] = useState<{ groupKey: string; itemId: number } | null>(null);
   const [createdGroupsBySectionKey, setCreatedGroupsBySectionKey] = useState<Record<string, GroupedToolboxGroup[]>>({});
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
@@ -538,23 +540,46 @@ const ToolboxDetail = () => {
     }
   };
 
-  const moveToolInGroup = async (
+  const clearDraggedTool = () => {
+    setDraggedTool(null);
+    setDragOverTool(null);
+  };
+
+  const startDraggingTool = (
+    event: DragEvent<HTMLDivElement>,
+    groupKey: string,
+    itemId: number,
+  ) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(itemId));
+    setDraggedTool({ groupKey, itemId });
+    setDragOverTool(null);
+  };
+
+  const reorderToolInGroup = async (
     groupKey: string,
     groupItems: ToolboxInventoryItem[],
-    itemIndex: number,
-    direction: -1 | 1,
+    draggedItemId: number,
+    targetItemId: number,
   ) => {
     if (!toolboxId) return;
 
-    const nextIndex = itemIndex + direction;
+    if (draggedItemId === targetItemId) {
+      clearDraggedTool();
+      return;
+    }
 
-    if (nextIndex < 0 || nextIndex >= groupItems.length) {
+    const draggedItemIndex = groupItems.findIndex((item) => item.item_id === draggedItemId);
+    const targetItemIndex = groupItems.findIndex((item) => item.item_id === targetItemId);
+
+    if (draggedItemIndex === -1 || targetItemIndex === -1) {
+      clearDraggedTool();
       return;
     }
 
     const nextGroupItems = [...groupItems];
-    const [movedItem] = nextGroupItems.splice(itemIndex, 1);
-    nextGroupItems.splice(nextIndex, 0, movedItem);
+    const [movedItem] = nextGroupItems.splice(draggedItemIndex, 1);
+    nextGroupItems.splice(targetItemIndex, 0, movedItem);
 
     setReorderingItemsByGroupKey((prev) => ({ ...prev, [groupKey]: true }));
     setReorderErrorByGroupKey((prev) => {
@@ -580,6 +605,7 @@ const ToolboxDetail = () => {
         delete next[groupKey];
         return next;
       });
+      clearDraggedTool();
     }
   };
 
@@ -942,8 +968,43 @@ const startNewVerification = async () => {
                               {reorderErrorByGroupKey[groupKey]}
                             </p>
                           )}
-                          {group.items.map((item, itemIndex) => (
-                            <div key={item.item_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm relative">
+                          {group.items.map((item) => (
+                            <div
+                              key={item.item_id}
+                              draggable={!reorderingItemsByGroupKey[groupKey]}
+                              onDragStart={(event) => startDraggingTool(event, groupKey, item.item_id)}
+                              onDragOver={(event) => {
+                                if (draggedTool?.groupKey !== groupKey) return;
+
+                                event.preventDefault();
+                                event.dataTransfer.dropEffect = "move";
+                                setDragOverTool({ groupKey, itemId: item.item_id });
+                              }}
+                              onDragLeave={() => {
+                                setDragOverTool((currentDragOverTool) =>
+                                  currentDragOverTool?.groupKey === groupKey &&
+                                  currentDragOverTool.itemId === item.item_id
+                                    ? null
+                                    : currentDragOverTool,
+                                );
+                              }}
+                              onDrop={(event) => {
+                                event.preventDefault();
+
+                                if (draggedTool?.groupKey !== groupKey) {
+                                  clearDraggedTool();
+                                  return;
+                                }
+
+                                void reorderToolInGroup(groupKey, group.items, draggedTool.itemId, item.item_id);
+                              }}
+                              onDragEnd={clearDraggedTool}
+                              className={`rounded-md border bg-white p-3 shadow-sm relative ${
+                                dragOverTool?.groupKey === groupKey && dragOverTool.itemId === item.item_id
+                                  ? "border-secondary ring-2 ring-secondary/30"
+                                  : "border-slate-200"
+                              } ${draggedTool?.groupKey === groupKey && draggedTool.itemId === item.item_id ? "opacity-50" : ""}`}
+                            >
                               <label className={`absolute top-3 right-3 w-15 h-15 rounded-xl  shadow-[0_4px_6px_rgba(0,0,0,0.1)] border   border-secondary border-b-3 border-t-0 border-l-0 hover:cursor-pointer flex justify-center items-center bg-tertiary `}>
                                 {<Check className= {`text-secondary ${checkedItems.has(item.item_id) ? " " : "hidden"}`} size={50}   />}
                                 <input
@@ -955,25 +1016,11 @@ const startNewVerification = async () => {
                                 </label>
                                 <div className="flex-1">
                                   <div className="flex max-w-[85%] items-start gap-3">
-                                    <div className="flex shrink-0 overflow-hidden rounded-md border border-secondary/30 bg-tertiary shadow-sm">
-                                      <button
-                                        type="button"
-                                        onClick={() => moveToolInGroup(groupKey, group.items, itemIndex, -1)}
-                                        disabled={itemIndex === 0 || reorderingItemsByGroupKey[groupKey]}
-                                        title="Subir herramienta"
-                                        className="flex h-9 w-9 items-center justify-center border-r border-secondary/20 text-secondary disabled:cursor-not-allowed disabled:opacity-30"
-                                      >
-                                        <ArrowUp size={18} />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => moveToolInGroup(groupKey, group.items, itemIndex, 1)}
-                                        disabled={itemIndex === group.items.length - 1 || reorderingItemsByGroupKey[groupKey]}
-                                        title="Bajar herramienta"
-                                        className="flex h-9 w-9 items-center justify-center text-secondary disabled:cursor-not-allowed disabled:opacity-30"
-                                      >
-                                        <ArrowDown size={18} />
-                                      </button>
+                                    <div
+                                      title="Arrastrar para cambiar el orden"
+                                      className="flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-md border border-secondary/30 bg-tertiary text-secondary shadow-sm active:cursor-grabbing"
+                                    >
+                                      <GripVertical size={20} />
                                     </div>
                                     <p className="font-semibold">{item.raw_description}</p>
                                   </div>
