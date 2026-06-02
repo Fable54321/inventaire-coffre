@@ -556,6 +556,24 @@ const ToolboxDetail = () => {
     setDragOverTool(null);
   };
 
+  const autoScrollPageDuringDrag = (event: DragEvent<HTMLDivElement>) => {
+    const scrollZoneSize = 120;
+    const maxScrollSpeed = 28;
+    const distanceFromTop = event.clientY;
+    const distanceFromBottom = window.innerHeight - event.clientY;
+
+    if (distanceFromTop < scrollZoneSize) {
+      const scrollAmount = -Math.ceil(((scrollZoneSize - distanceFromTop) / scrollZoneSize) * maxScrollSpeed);
+      window.scrollBy({ top: scrollAmount });
+      return;
+    }
+
+    if (distanceFromBottom < scrollZoneSize) {
+      const scrollAmount = Math.ceil(((scrollZoneSize - distanceFromBottom) / scrollZoneSize) * maxScrollSpeed);
+      window.scrollBy({ top: scrollAmount });
+    }
+  };
+
   const reorderToolInGroup = async (
     groupKey: string,
     groupItems: ToolboxInventoryItem[],
@@ -978,6 +996,7 @@ const startNewVerification = async () => {
 
                                 event.preventDefault();
                                 event.dataTransfer.dropEffect = "move";
+                                autoScrollPageDuringDrag(event);
                                 setDragOverTool({ groupKey, itemId: item.item_id });
                               }}
                               onDragLeave={() => {
