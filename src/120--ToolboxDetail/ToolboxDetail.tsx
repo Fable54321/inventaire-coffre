@@ -877,108 +877,8 @@ const startNewVerification = async () => {
                         <span className="text-2xl">{groupOpen ? <ChevronUp /> : <ChevronDown />}</span>
                        
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => openAddToolForm(groupKey)}
-                        title="Agregar herramienta al grupo"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {activeAddGroupKey === groupKey ? <X size={24} /> : <Plus size={24} />}
-                      </button>
-                   
                       </div>
 
-                      {activeAddGroupKey === groupKey && (
-                        <form
-                          className="mx-4 mb-4 grid gap-3 rounded-md border border-secondary/30 bg-white p-4 text-[0.75em] shadow-sm"
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            submitNewTool(groupKey, group);
-                          }}
-                        >
-                          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem]">
-                            <label className="flex flex-col gap-1 font-semibold text-secondary">
-                              Herramienta
-                              <input
-                                type="text"
-                                value={addToolDraft.raw_description}
-                                onChange={(event) =>
-                                  setAddToolDraft((prev) => ({ ...prev, raw_description: event.target.value }))
-                                }
-                                disabled={addingTool}
-                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                placeholder="Descripcion"
-                              />
-                            </label>
-                            <label className="flex flex-col gap-1 font-semibold text-secondary">
-                              Esperada
-                              <input
-                                type="number"
-                                min="0"
-                                inputMode="numeric"
-                                value={addToolDraft.expected_quantity}
-                                onChange={(event) =>
-                                  setAddToolDraft((prev) => ({ ...prev, expected_quantity: event.target.value }))
-                                }
-                                disabled={addingTool}
-                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                              />
-                            </label>
-                            <label className="flex flex-col gap-1 font-semibold text-secondary">
-                              Real
-                              <input
-                                type="number"
-                                min="0"
-                                inputMode="numeric"
-                                value={addToolDraft.actual_quantity}
-                                onChange={(event) =>
-                                  setAddToolDraft((prev) => ({ ...prev, actual_quantity: event.target.value }))
-                                }
-                                disabled={addingTool}
-                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                placeholder="-"
-                              />
-                            </label>
-                          </div>
-                          <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto]">
-                            <label className="flex flex-col gap-1 font-semibold text-secondary">
-                              Estado
-                              <input
-                                type="text"
-                                value={addToolDraft.status}
-                                onChange={(event) =>
-                                  setAddToolDraft((prev) => ({ ...prev, status: event.target.value }))
-                                }
-                                disabled={addingTool}
-                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                              />
-                            </label>
-                            <label className="flex flex-col gap-1 font-semibold text-secondary">
-                              Nota
-                              <input
-                                type="text"
-                                value={addToolDraft.status_note}
-                                onChange={(event) =>
-                                  setAddToolDraft((prev) => ({ ...prev, status_note: event.target.value }))
-                                }
-                                disabled={addingTool}
-                                className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                placeholder="Opcional"
-                              />
-                            </label>
-                            <button
-                              type="submit"
-                              disabled={addingTool}
-                              className="mt-auto flex h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              <Plus size={20} />
-                              Agregar
-                            </button>
-                          </div>
-                          {addToolError && <p className="font-semibold text-red-500">{addToolError}</p>}
-                        </form>
-                      )}
-                      
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">
                           {reorderErrorByGroupKey[groupKey] && (
@@ -1101,6 +1001,108 @@ const startNewVerification = async () => {
                               
                             </div>
                           ))}
+                          <div className="rounded-md border border-secondary/30 bg-white p-3 shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() => openAddToolForm(groupKey)}
+                              title="Agregar herramienta al grupo"
+                              className="flex w-full items-center justify-center gap-2 rounded-md bg-secondary px-4 py-3 text-[0.8em] font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {activeAddGroupKey === groupKey ? <X size={22} /> : <Plus size={22} />}
+                              {activeAddGroupKey === groupKey ? "Cancelar agregar herramienta" : "Agregar herramienta"}
+                            </button>
+
+                            {activeAddGroupKey === groupKey && (
+                              <form
+                                className="mt-3 grid gap-3 text-[0.75em]"
+                                onSubmit={(event) => {
+                                  event.preventDefault();
+                                  submitNewTool(groupKey, group);
+                                }}
+                              >
+                                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem]">
+                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
+                                    Herramienta
+                                    <input
+                                      type="text"
+                                      value={addToolDraft.raw_description}
+                                      onChange={(event) =>
+                                        setAddToolDraft((prev) => ({ ...prev, raw_description: event.target.value }))
+                                      }
+                                      disabled={addingTool}
+                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                      placeholder="Descripcion"
+                                    />
+                                  </label>
+                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
+                                    Esperada
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      inputMode="numeric"
+                                      value={addToolDraft.expected_quantity}
+                                      onChange={(event) =>
+                                        setAddToolDraft((prev) => ({ ...prev, expected_quantity: event.target.value }))
+                                      }
+                                      disabled={addingTool}
+                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                    />
+                                  </label>
+                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
+                                    Real
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      inputMode="numeric"
+                                      value={addToolDraft.actual_quantity}
+                                      onChange={(event) =>
+                                        setAddToolDraft((prev) => ({ ...prev, actual_quantity: event.target.value }))
+                                      }
+                                      disabled={addingTool}
+                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                      placeholder="-"
+                                    />
+                                  </label>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto]">
+                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
+                                    Estado
+                                    <input
+                                      type="text"
+                                      value={addToolDraft.status}
+                                      onChange={(event) =>
+                                        setAddToolDraft((prev) => ({ ...prev, status: event.target.value }))
+                                      }
+                                      disabled={addingTool}
+                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                    />
+                                  </label>
+                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
+                                    Nota
+                                    <input
+                                      type="text"
+                                      value={addToolDraft.status_note}
+                                      onChange={(event) =>
+                                        setAddToolDraft((prev) => ({ ...prev, status_note: event.target.value }))
+                                      }
+                                      disabled={addingTool}
+                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                      placeholder="Opcional"
+                                    />
+                                  </label>
+                                  <button
+                                    type="submit"
+                                    disabled={addingTool}
+                                    className="mt-auto flex h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    <Plus size={20} />
+                                    Agregar
+                                  </button>
+                                </div>
+                                {addToolError && <p className="font-semibold text-red-500">{addToolError}</p>}
+                              </form>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
