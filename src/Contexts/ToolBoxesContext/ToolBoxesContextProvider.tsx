@@ -212,6 +212,47 @@ const updateToolboxInventoryStatus = useCallback(
     [fetchToolboxItems],
   );
 
+  const reorderToolboxItems = useCallback(
+    async (toolboxId: number, orderedItemIds: number[]) => {
+      await fetchWithAuth(`/toolboxes/${toolboxId}/items/reorder`, {
+        method: 'PATCH',
+        body: {
+          item_ids: orderedItemIds,
+        },
+      });
+
+      setToolboxItems((prev) => {
+        const orderedItemIdSet = new Set(orderedItemIds);
+        const itemsById = new Map(prev.map((item) => [item.item_id, item]));
+        const orderedItems = orderedItemIds
+          .map((itemId, index) => {
+            const item = itemsById.get(itemId);
+
+            return item ? { ...item, item_order: index + 1 } : null;
+          })
+          .filter((item): item is ToolboxInventoryItem => item !== null);
+
+        let insertedOrderedItems = false;
+        const nextItems: ToolboxInventoryItem[] = [];
+
+        prev.forEach((item) => {
+          if (!orderedItemIdSet.has(item.item_id)) {
+            nextItems.push(item);
+            return;
+          }
+
+          if (!insertedOrderedItems) {
+            nextItems.push(...orderedItems);
+            insertedOrderedItems = true;
+          }
+        });
+
+        return nextItems;
+      });
+    },
+    [],
+  );
+
   const addToolboxGroup = useCallback(
     async (
       toolboxId: number,
@@ -266,6 +307,7 @@ const updateToolboxInventoryStatus = useCallback(
     updateToolboxInventoryStatus,
     uploadToolboxSignature,
     updateToolboxItem,
+    reorderToolboxItems,
     addToolboxItemToGroup,
     addToolboxGroup,
     verificationLoading,

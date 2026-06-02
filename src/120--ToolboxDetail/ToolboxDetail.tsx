@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
 import type { ToolboxInventoryItem } from "../Contexts/ToolBoxesContext/ToolBoxesContext";
-import { Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X, ArrowLeftToLine } from "lucide-react";
+import { ArrowDown, ArrowLeftToLine, ArrowUp, Check, CheckCheck, ChevronDown, ChevronsRight, Minus, Plus, ChevronUp, X } from "lucide-react";
 import StartNewVerificationConfirmModal from "./StartNewVerificationConfirmModal";
 import DoneCheckingConfirmModal from "./DoneCheckingConfirmModal";
 
@@ -23,6 +23,7 @@ const ToolboxDetail = () => {
     toolboxItemsError,
     fetchToolboxItems,
     updateToolboxItem,
+    reorderToolboxItems,
     addToolboxItemToGroup,
     addToolboxGroup,
     updateToolboxInventoryStatus,
@@ -54,6 +55,8 @@ const ToolboxDetail = () => {
   const [addGroupName, setAddGroupName] = useState("");
   const [addingGroup, setAddingGroup] = useState(false);
   const [addGroupError, setAddGroupError] = useState<string | null>(null);
+  const [reorderingItemsByGroupKey, setReorderingItemsByGroupKey] = useState<Record<string, boolean>>({});
+  const [reorderErrorByGroupKey, setReorderErrorByGroupKey] = useState<Record<string, string>>({});
   const [createdGroupsBySectionKey, setCreatedGroupsBySectionKey] = useState<Record<string, GroupedToolboxGroup[]>>({});
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
@@ -535,6 +538,51 @@ const ToolboxDetail = () => {
     }
   };
 
+  const moveToolInGroup = async (
+    groupKey: string,
+    groupItems: ToolboxInventoryItem[],
+    itemIndex: number,
+    direction: -1 | 1,
+  ) => {
+    if (!toolboxId) return;
+
+    const nextIndex = itemIndex + direction;
+
+    if (nextIndex < 0 || nextIndex >= groupItems.length) {
+      return;
+    }
+
+    const nextGroupItems = [...groupItems];
+    const [movedItem] = nextGroupItems.splice(itemIndex, 1);
+    nextGroupItems.splice(nextIndex, 0, movedItem);
+
+    setReorderingItemsByGroupKey((prev) => ({ ...prev, [groupKey]: true }));
+    setReorderErrorByGroupKey((prev) => {
+      const next = { ...prev };
+      delete next[groupKey];
+      return next;
+    });
+
+    try {
+      await reorderToolboxItems(
+        Number(toolboxId),
+        nextGroupItems.map((item) => item.item_id),
+      );
+    } catch (error) {
+      console.error("Error reordering toolbox items:", error);
+      setReorderErrorByGroupKey((prev) => ({
+        ...prev,
+        [groupKey]: error instanceof Error ? error.message : "No se pudo cambiar el orden.",
+      }));
+    } finally {
+      setReorderingItemsByGroupKey((prev) => {
+        const next = { ...prev };
+        delete next[groupKey];
+        return next;
+      });
+    }
+  };
+
   const handleDoneChecking = () => {
     if (!doneChecking) {
       setShowDoneConfirmModal(true);
@@ -889,7 +937,12 @@ const startNewVerification = async () => {
                       
                       {groupOpen && (
                         <div className="space-y-3 px-4 pb-4">
-                          {group.items.map((item) => (
+                          {reorderErrorByGroupKey[groupKey] && (
+                            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[0.7em] font-semibold text-red-600">
+                              {reorderErrorByGroupKey[groupKey]}
+                            </p>
+                          )}
+                          {group.items.map((item, itemIndex) => (
                             <div key={item.item_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm relative">
                               <label className={`absolute top-3 right-3 w-15 h-15 rounded-xl  shadow-[0_4px_6px_rgba(0,0,0,0.1)] border   border-secondary border-b-3 border-t-0 border-l-0 hover:cursor-pointer flex justify-center items-center bg-tertiary `}>
                                 {<Check className= {`text-secondary ${checkedItems.has(item.item_id) ? " " : "hidden"}`} size={50}   />}
@@ -901,7 +954,29 @@ const startNewVerification = async () => {
                                 />
                                 </label>
                                 <div className="flex-1">
-                                  <p className="font-semibold max-w-[85%]">{item.raw_description}</p>
+                                  <div className="flex max-w-[85%] items-start gap-3">
+                                    <div className="flex shrink-0 overflow-hidden rounded-md border border-secondary/30 bg-tertiary shadow-sm">
+                                      <button
+                                        type="button"
+                                        onClick={() => moveToolInGroup(groupKey, group.items, itemIndex, -1)}
+                                        disabled={itemIndex === 0 || reorderingItemsByGroupKey[groupKey]}
+                                        title="Subir herramienta"
+                                        className="flex h-9 w-9 items-center justify-center border-r border-secondary/20 text-secondary disabled:cursor-not-allowed disabled:opacity-30"
+                                      >
+                                        <ArrowUp size={18} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => moveToolInGroup(groupKey, group.items, itemIndex, 1)}
+                                        disabled={itemIndex === group.items.length - 1 || reorderingItemsByGroupKey[groupKey]}
+                                        title="Bajar herramienta"
+                                        className="flex h-9 w-9 items-center justify-center text-secondary disabled:cursor-not-allowed disabled:opacity-30"
+                                      >
+                                        <ArrowDown size={18} />
+                                      </button>
+                                    </div>
+                                    <p className="font-semibold">{item.raw_description}</p>
+                                  </div>
                                   <div className="mt-2 grid gap-3 sm:grid-cols-2">
                                     <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
                                     <div className="flex flex-col gap-1">

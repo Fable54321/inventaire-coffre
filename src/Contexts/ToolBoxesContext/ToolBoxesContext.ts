@@ -113,6 +113,10 @@ verificationLoading: boolean;
       trackCheckedChange?: boolean;
     },
   ) => Promise<void>;
+  reorderToolboxItems: (
+    toolboxId: number,
+    orderedItemIds: number[],
+  ) => Promise<void>;
   addToolboxItemToGroup: (
     toolboxId: number,
     sectionId: number,
