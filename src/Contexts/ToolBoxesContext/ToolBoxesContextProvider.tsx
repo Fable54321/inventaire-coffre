@@ -121,6 +121,7 @@ const updateToolboxInventoryStatus = useCallback(
       toolboxId: number,
       itemId: number,
       update: {
+        expected_quantity?: number | null;
         actual_quantity?: number | null;
         status?: string | null;
         status_note?: string | null;

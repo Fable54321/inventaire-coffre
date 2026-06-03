@@ -33,6 +33,9 @@ const ToolboxDetail = () => {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [optimisticCheckedById, setOptimisticCheckedById] = useState<Record<number, boolean>>({});
+  const [expectedQuantityDraftById, setExpectedQuantityDraftById] = useState<Record<number, string>>({});
+  const [savingExpectedQuantityById, setSavingExpectedQuantityById] = useState<Record<number, boolean>>({});
+  const [expectedQuantityErrorById, setExpectedQuantityErrorById] = useState<Record<number, string>>({});
   const [actualQuantityDraftById, setActualQuantityDraftById] = useState<Record<number, string>>({});
   const [savingActualQuantityById, setSavingActualQuantityById] = useState<Record<number, boolean>>({});
   const [actualQuantityErrorById, setActualQuantityErrorById] = useState<Record<number, string>>({});
@@ -106,6 +109,24 @@ const ToolboxDetail = () => {
     }
   }, [toolboxId, fetchToolboxItems]);
 
+  const getDraftedExpectedQuantity = (toolboxItem: typeof toolboxItems[number]) => {
+    const draft = expectedQuantityDraftById[toolboxItem.item_id];
+
+    if (draft === undefined) {
+      return toolboxItem.expected_quantity;
+    }
+
+    const trimmedDraft = draft.trim();
+
+    if (trimmedDraft === "") {
+      return null;
+    }
+
+    const nextQuantity = Number(trimmedDraft);
+
+    return Number.isFinite(nextQuantity) ? nextQuantity : toolboxItem.expected_quantity;
+  };
+
   const getDraftedActualQuantity = (toolboxItem: typeof toolboxItems[number]) => {
     const draft = actualQuantityDraftById[toolboxItem.item_id];
 
@@ -122,6 +143,96 @@ const ToolboxDetail = () => {
     const nextQuantity = Number(trimmedDraft);
 
     return Number.isFinite(nextQuantity) ? nextQuantity : toolboxItem.actual_quantity;
+  };
+
+  const updateExpectedQuantity = async (
+    toolboxItem: typeof toolboxItems[number],
+    nextQuantityOverride?: number | null,
+  ) => {
+    if (!toolboxId) return;
+
+    const nextQuantity =
+      nextQuantityOverride === undefined ? getDraftedExpectedQuantity(toolboxItem) : nextQuantityOverride;
+
+    if (nextQuantity !== null && (!Number.isFinite(nextQuantity) || nextQuantity < 0)) {
+      setExpectedQuantityErrorById((prev) => ({
+        ...prev,
+        [toolboxItem.item_id]: "La cantidad debe ser 0 o mas.",
+      }));
+      return;
+    }
+
+    if (nextQuantity === toolboxItem.expected_quantity) {
+      setExpectedQuantityDraftById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      setExpectedQuantityErrorById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      return;
+    }
+
+    const draftedActualQuantity = getDraftedActualQuantity(toolboxItem);
+    const isQuantityLessThanExpected =
+      draftedActualQuantity !== null && nextQuantity !== null && draftedActualQuantity < nextQuantity;
+    const shouldUncheck = isQuantityLessThanExpected && checkedItems.has(toolboxItem.item_id);
+    const nextCheckedState = shouldUncheck ? false : checkedItems.has(toolboxItem.item_id);
+
+    setSavingExpectedQuantityById((prev) => ({ ...prev, [toolboxItem.item_id]: true }));
+    setExpectedQuantityErrorById((prev) => {
+      const next = { ...prev };
+      delete next[toolboxItem.item_id];
+      return next;
+    });
+
+    try {
+      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
+        expected_quantity: nextQuantity,
+        status: toolboxItem.status,
+        status_note: toolboxItem.status_note,
+        is_checked: nextCheckedState,
+      }, {
+        trackCheckedChange: false,
+      });
+      setExpectedQuantityDraftById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      if (shouldUncheck) {
+        setOptimisticCheckedById((prev) => ({
+          ...prev,
+          [toolboxItem.item_id]: false,
+        }));
+      }
+    } catch (error) {
+      setExpectedQuantityErrorById((prev) => ({
+        ...prev,
+        [toolboxItem.item_id]: "No se pudo guardar la cantidad.",
+      }));
+      console.error("Error updating item expected quantity:", error);
+    } finally {
+      setSavingExpectedQuantityById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+    }
+  };
+
+  const adjustExpectedQuantity = async (toolboxItem: typeof toolboxItems[number], delta: number) => {
+    const currentQuantity = getDraftedExpectedQuantity(toolboxItem) ?? 0;
+    const nextQuantity = Math.max(0, currentQuantity + delta);
+
+    setExpectedQuantityDraftById((prev) => ({
+      ...prev,
+      [toolboxItem.item_id]: String(nextQuantity),
+    }));
+    await updateExpectedQuantity(toolboxItem, nextQuantity);
   };
 
   const updateActualQuantity = async (
@@ -156,8 +267,9 @@ const ToolboxDetail = () => {
     }
 
     // Auto-uncheck if actual quantity is less than expected quantity
+    const draftedExpectedQuantity = getDraftedExpectedQuantity(toolboxItem);
     const isQuantityLessThanExpected =
-      nextQuantity !== null && toolboxItem.expected_quantity !== null && nextQuantity < toolboxItem.expected_quantity;
+      nextQuantity !== null && draftedExpectedQuantity !== null && nextQuantity < draftedExpectedQuantity;
     const shouldUncheck = isQuantityLessThanExpected && checkedItems.has(toolboxItem.item_id);
     const nextCheckedState = shouldUncheck ? false : checkedItems.has(toolboxItem.item_id);
 
@@ -247,10 +359,14 @@ const ToolboxDetail = () => {
 
   const toggleGroupItemsChecked = async (groupItems: typeof toolboxItems[number][]) => {
     if (!toolboxId) return;
-    const nextChecked = !isGroupComplete(groupItems);
-    const itemsToUpdate = groupItems.filter((item) => checkedItems.has(item.item_id) !== nextChecked);
 
-    if (itemsToUpdate.length === 0) return;
+  const countableItems = groupItems.filter(isCountableItem);
+  const nextChecked = !isGroupComplete(countableItems);
+  const itemsToUpdate = countableItems.filter(
+    (item) => checkedItems.has(item.item_id) !== nextChecked,
+  );
+
+  if (itemsToUpdate.length === 0) return;
 
     setOptimisticCheckedById((prev) => {
       const next = { ...prev };
@@ -369,32 +485,66 @@ const ToolboxDetail = () => {
     return grouped;
   }, [visibleToolboxItems, createdGroupsBySectionKey]);
 
-  const isGroupComplete = (groupItems: typeof toolboxItems[number][]) =>
-    groupItems.length > 0 && groupItems.every((item) => checkedItems.has(item.item_id));
+  const isCountableItem = (item: typeof toolboxItems[number]) =>
+  (item.expected_quantity ?? 0) > 0;
 
-  const getGroupCheckedCount = (groupItems: typeof toolboxItems[number][]) =>
-    groupItems.filter((item) => checkedItems.has(item.item_id)).length;
+  const isGroupComplete = (groupItems: typeof toolboxItems[number][]) => {
+  const countableItems = groupItems.filter(isCountableItem);
 
-  const getSectionCheckedCount = (section: typeof groupedItems[string]) =>
-    Object.values(section.groups).reduce((acc, group) => acc + getGroupCheckedCount(group.items), 0);
-
-  const getSectionTotalCount = (section: typeof groupedItems[string]) =>
-    Object.values(section.groups).reduce((acc, group) => acc + group.items.length, 0);
-
-  const getCheckedCount = () =>
-    toolboxItems.filter((item) => checkedItems.has(item.item_id)).length;
-
-  
-
-
-  const isSectionComplete = (section: typeof groupedItems[string]) =>
-    getSectionTotalCount(section) > 0 && Object.values(section.groups).every((group) => isGroupComplete(group.items));
-
-  const allSectionsComplete = useMemo(
-    () =>
-      toolboxItems.length > 0 && toolboxItems.every((item) => checkedItems.has(item.item_id)),
-    [toolboxItems, checkedItems]
+  return (
+    countableItems.length > 0 &&
+    countableItems.every((item) => checkedItems.has(item.item_id))
   );
+};
+
+const getGroupCheckedCount = (groupItems: typeof toolboxItems[number][]) =>
+  groupItems.filter(
+    (item) => isCountableItem(item) && checkedItems.has(item.item_id),
+  ).length;
+
+  const getGroupTotalCount = (groupItems: typeof toolboxItems[number][]) =>
+  groupItems.filter(isCountableItem).length;
+
+const getSectionCheckedCount = (section: typeof groupedItems[string]) =>
+  Object.values(section.groups).reduce(
+    (acc, group) => acc + getGroupCheckedCount(group.items),
+    0,
+  );
+
+ const getSectionTotalCount = (section: typeof groupedItems[string]) =>
+  Object.values(section.groups).reduce(
+    (acc, group) => acc + getGroupTotalCount(group.items),
+    0,
+  );
+ const getCheckedCount = () =>
+  toolboxItems.filter(
+    (item) => isCountableItem(item) && checkedItems.has(item.item_id),
+  ).length;
+
+
+  const getTotalCount = () =>
+  toolboxItems.filter(isCountableItem).length;
+
+
+const isSectionComplete = (section: typeof groupedItems[string]) =>
+  getSectionTotalCount(section) > 0 &&
+  Object.values(section.groups).every((group) => {
+    const countableItems = group.items.filter(isCountableItem);
+
+    return (
+      countableItems.length === 0 ||
+      countableItems.every((item) => checkedItems.has(item.item_id))
+    );
+  });
+
+const allSectionsComplete = useMemo(() => {
+  const countableItems = toolboxItems.filter(isCountableItem);
+
+  return (
+    countableItems.length > 0 &&
+    countableItems.every((item) => checkedItems.has(item.item_id))
+  );
+}, [toolboxItems, checkedItems]);
 
   const toggleSection = (sectionKey: string) => {
     setOpenSections((prev) => {
@@ -724,9 +874,9 @@ const startNewVerification = async () => {
           <p className=" text-lg text-slate-600">
             {allSectionsComplete ? "Todas las secciones completadas ✅" : "Marca cada herramienta para seguir el progreso."}
           </p>
-          <p className="text-[1.5em] font-bold text-muted">
-            recuento total: {getCheckedCount()} / {toolboxItems.length}
-          </p>
+        <p className="text-[1.5em] font-bold text-muted">
+  recuento total: {getCheckedCount()} / {getTotalCount()}
+</p>
           <label className="mt-3 flex w-fit items-center gap-3 rounded-md border border-secondary/30 bg-white px-4 py-3 text-[1.15em] font-bold text-secondary shadow-sm hover:cursor-pointer">
             <input
               type="checkbox"
@@ -853,7 +1003,9 @@ const startNewVerification = async () => {
                         <div className="flex min-w-0 flex-1 flex-col gap-2 ">
                         <div className="flex min-w-0 text-[0.8em] items-center gap-2 w-full">
                           <p className="min-w-0 max-w-[70%] flex-1">Grupo: {group.groupName}</p>
-                          <p className="shrink-0 whitespace-nowrap">({getGroupCheckedCount(group.items)} / {group.items.length})</p>
+                          <p className="shrink-0 whitespace-nowrap">
+  ({getGroupCheckedCount(group.items)} / {getGroupTotalCount(group.items)})
+</p>
                         </div>
                         <div className="flex text-[0.8em] items-center gap-3 ">
                           <p>{groupComplete ? "DESMARCAR TODO EL GRUPO :" : "MARCAR TODO EL GRUPO :"}</p>
@@ -944,7 +1096,55 @@ const startNewVerification = async () => {
                                     <p className="font-semibold">{item.raw_description}</p>
                                   </div>
                                   <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                                    <p>Cantidad esperada: {item.expected_quantity ?? "-"}</p>
+                                    <div className="flex flex-col gap-1">
+                                      <span className="font-medium">Cantidad esperada</span>
+                                      <div className="flex w-fit items-center overflow-hidden rounded-md border border-secondary/50 bg-tertiary shadow-sm">
+                                        <button
+                                          type="button"
+                                          onClick={() => adjustExpectedQuantity(item, -1)}
+                                          disabled={savingExpectedQuantityById[item.item_id]}
+                                          title="Restar cantidad esperada"
+                                          className="flex h-9 w-9 items-center justify-center text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                          <Minus size={18} />
+                                        </button>
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          inputMode="numeric"
+                                          value={expectedQuantityDraftById[item.item_id] ?? item.expected_quantity ?? ""}
+                                          onChange={(event) =>
+                                            setExpectedQuantityDraftById((prev) => ({
+                                              ...prev,
+                                              [item.item_id]: event.target.value,
+                                            }))
+                                          }
+                                          onBlur={() => updateExpectedQuantity(item)}
+                                          onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                              event.currentTarget.blur();
+                                            }
+                                          }}
+                                          disabled={savingExpectedQuantityById[item.item_id]}
+                                          className="h-9 w-16 border-x border-secondary/30 bg-white text-center font-bold text-secondary outline-none disabled:opacity-60"
+                                          aria-label="Cantidad esperada"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => adjustExpectedQuantity(item, 1)}
+                                          disabled={savingExpectedQuantityById[item.item_id]}
+                                          title="Sumar cantidad esperada"
+                                          className="flex h-9 w-9 items-center justify-center text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                          <Plus size={18} />
+                                        </button>
+                                      </div>
+                                      {expectedQuantityErrorById[item.item_id] && (
+                                        <span className="text-sm text-red-500">
+                                          {expectedQuantityErrorById[item.item_id]}
+                                        </span>
+                                      )}
+                                    </div>
                                     <div className="flex flex-col gap-1">
                                       <span className="font-medium">Cantidad real</span>
                                       <div className="flex w-fit items-center overflow-hidden rounded-md border border-secondary/50 bg-tertiary shadow-sm">
@@ -1123,7 +1323,7 @@ const startNewVerification = async () => {
 
       {showDoneConfirmModal && (
         <DoneCheckingConfirmModal
-          uncheckedCount={toolboxItems.length - getCheckedCount()}
+          uncheckedCount={getTotalCount() - getCheckedCount()}
           onCancel={cancelDoneChecking}
           onConfirm={confirmDoneChecking}
         />
