@@ -544,6 +544,7 @@ const allSectionsComplete = useMemo(() => {
     countableItems.length > 0 &&
     countableItems.every((item) => checkedItems.has(item.item_id))
   );
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [toolboxItems, checkedItems]);
 
   const toggleSection = (sectionKey: string) => {
@@ -1195,7 +1196,7 @@ const startNewVerification = async () => {
                                       )}
                                     </div>
                                     
-                                    {item.status_note && <p className="w-full text-red-500">Nota: {item.status_note}</p>}
+                                    {item.status_note && <p className="w-full col-span-2 text-red-500">Nota: {item.status_note}</p>}
                                   </div>
                                 </div>
                               
