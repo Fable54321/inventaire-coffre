@@ -1194,7 +1194,7 @@ const startNewVerification = async () => {
                                         </span>
                                       )}
                                     </div>
-                                    <p>Estado: {item.status ?? "-"}</p>
+                                    
                                     {item.status_note && <p>Nota: {item.status_note}</p>}
                                   </div>
                                 </div>
