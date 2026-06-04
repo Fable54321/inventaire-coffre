@@ -160,6 +160,24 @@ const ToolboxDetail = () => {
     return trimmedDraft === "" ? null : trimmedDraft;
   };
 
+  const getToolboxItemUpdatePayload = (
+    toolboxItem: typeof toolboxItems[number],
+    overrides: {
+      expected_quantity?: number | null;
+      actual_quantity?: number | null;
+      status?: string | null;
+      status_note?: string | null;
+      is_checked?: boolean | null;
+    } = {},
+  ) => ({
+    expected_quantity: getDraftedExpectedQuantity(toolboxItem),
+    actual_quantity: getDraftedActualQuantity(toolboxItem),
+    status: toolboxItem.status,
+    status_note: getDraftedStatusNote(toolboxItem),
+    is_checked: checkedItems.has(toolboxItem.item_id),
+    ...overrides,
+  });
+
   const updateStatusNote = async (toolboxItem: typeof toolboxItems[number]) => {
     if (!toolboxId) return;
 
@@ -187,11 +205,9 @@ const ToolboxDetail = () => {
     });
 
     try {
-      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
-        status: toolboxItem.status,
+      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, getToolboxItemUpdatePayload(toolboxItem, {
         status_note: nextStatusNote,
-        is_checked: checkedItems.has(toolboxItem.item_id),
-      }, {
+      }), {
         trackCheckedChange: false,
       });
       setStatusNoteDraftById((prev) => {
@@ -259,12 +275,10 @@ const ToolboxDetail = () => {
     });
 
     try {
-      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
+      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, getToolboxItemUpdatePayload(toolboxItem, {
         expected_quantity: nextQuantity,
-        status: toolboxItem.status,
-        status_note: toolboxItem.status_note,
         is_checked: nextCheckedState,
-      }, {
+      }), {
         trackCheckedChange: false,
       });
       setExpectedQuantityDraftById((prev) => {
@@ -350,12 +364,10 @@ const ToolboxDetail = () => {
     });
 
     try {
-      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
+      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, getToolboxItemUpdatePayload(toolboxItem, {
         actual_quantity: nextQuantity,
-        status: toolboxItem.status,
-        status_note: toolboxItem.status_note,
         is_checked: nextCheckedState,
-      }, {
+      }), {
         trackCheckedChange: false,
       });
       setActualQuantityDraftById((prev) => {
@@ -405,12 +417,9 @@ const ToolboxDetail = () => {
     setOptimisticCheckedById((prev) => ({ ...prev, [itemId]: nextChecked }));
 
     try {
-      await updateToolboxItem(Number(toolboxId), itemId, {
-        actual_quantity: getDraftedActualQuantity(toolboxItem),
-        status: toolboxItem.status,
-        status_note: toolboxItem.status_note,
+      await updateToolboxItem(Number(toolboxId), itemId, getToolboxItemUpdatePayload(toolboxItem, {
         is_checked: nextChecked,
-      });
+      }));
       setOptimisticCheckedById((prev) => {
         const next = { ...prev };
         delete next[itemId];
@@ -447,12 +456,9 @@ const ToolboxDetail = () => {
 
     const updateResults = await Promise.allSettled(
       itemsToUpdate.map((item) =>
-        updateToolboxItem(Number(toolboxId), item.item_id, {
-          actual_quantity: item.actual_quantity,
-          status: item.status,
-          status_note: item.status_note,
+        updateToolboxItem(Number(toolboxId), item.item_id, getToolboxItemUpdatePayload(item, {
           is_checked: nextChecked,
-        }),
+        })),
       ),
     );
 
@@ -884,12 +890,9 @@ const startNewVerification = async () => {
           updateToolboxItem(
             Number(toolboxId),
             item.item_id,
-            {
-              actual_quantity: item.actual_quantity,
-              status: item.status,
-              status_note: item.status_note,
+            getToolboxItemUpdatePayload(item, {
               is_checked: false,
-            },
+            }),
             {
               trackCheckedChange: false,
             },
