@@ -935,7 +935,7 @@ const startNewVerification = async () => {
                   <span>Sección: {section.sectionName}</span>
                   <span>({getSectionCheckedCount(section)} / {getSectionTotalCount(section)})</span>
                 </p>
-                {section.sectionType && <p className="text-sm text-muted">Tipo: {section.sectionType}</p>}
+               
                 </div>
                 {sectionComplete && <span className="text-green-600 text-[2em] ml-auto mr-20  ">✓</span>}
                 
