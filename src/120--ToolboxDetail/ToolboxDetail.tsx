@@ -190,6 +190,7 @@ const ToolboxDetail = () => {
       await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
         status: toolboxItem.status,
         status_note: nextStatusNote,
+        is_checked: checkedItems.has(toolboxItem.item_id),
       }, {
         trackCheckedChange: false,
       });
