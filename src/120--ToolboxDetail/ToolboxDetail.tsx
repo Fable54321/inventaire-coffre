@@ -39,6 +39,9 @@ const ToolboxDetail = () => {
   const [actualQuantityDraftById, setActualQuantityDraftById] = useState<Record<number, string>>({});
   const [savingActualQuantityById, setSavingActualQuantityById] = useState<Record<number, boolean>>({});
   const [actualQuantityErrorById, setActualQuantityErrorById] = useState<Record<number, string>>({});
+  const [statusNoteDraftById, setStatusNoteDraftById] = useState<Record<number, string>>({});
+  const [savingStatusNoteById, setSavingStatusNoteById] = useState<Record<number, boolean>>({});
+  const [statusNoteErrorById, setStatusNoteErrorById] = useState<Record<number, string>>({});
   const [doneChecking, setDoneChecking] = useState(false);
   const [showDoneConfirmModal, setShowDoneConfirmModal] = useState(false);
   const [showStartNewConfirmModal, setShowStartNewConfirmModal] = useState(false);
@@ -143,6 +146,71 @@ const ToolboxDetail = () => {
     const nextQuantity = Number(trimmedDraft);
 
     return Number.isFinite(nextQuantity) ? nextQuantity : toolboxItem.actual_quantity;
+  };
+
+  const getDraftedStatusNote = (toolboxItem: typeof toolboxItems[number]) => {
+    const draft = statusNoteDraftById[toolboxItem.item_id];
+
+    if (draft === undefined) {
+      return toolboxItem.status_note;
+    }
+
+    const trimmedDraft = draft.trim();
+
+    return trimmedDraft === "" ? null : trimmedDraft;
+  };
+
+  const updateStatusNote = async (toolboxItem: typeof toolboxItems[number]) => {
+    if (!toolboxId) return;
+
+    const nextStatusNote = getDraftedStatusNote(toolboxItem);
+
+    if (nextStatusNote === toolboxItem.status_note) {
+      setStatusNoteDraftById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      setStatusNoteErrorById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+      return;
+    }
+
+    setSavingStatusNoteById((prev) => ({ ...prev, [toolboxItem.item_id]: true }));
+    setStatusNoteErrorById((prev) => {
+      const next = { ...prev };
+      delete next[toolboxItem.item_id];
+      return next;
+    });
+
+    try {
+      await updateToolboxItem(Number(toolboxId), toolboxItem.item_id, {
+        status: toolboxItem.status,
+        status_note: nextStatusNote,
+      }, {
+        trackCheckedChange: false,
+      });
+      setStatusNoteDraftById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+    } catch (error) {
+      setStatusNoteErrorById((prev) => ({
+        ...prev,
+        [toolboxItem.item_id]: "No se pudo guardar la nota.",
+      }));
+      console.error("Error updating item status note:", error);
+    } finally {
+      setSavingStatusNoteById((prev) => {
+        const next = { ...prev };
+        delete next[toolboxItem.item_id];
+        return next;
+      });
+    }
   };
 
   const updateExpectedQuantity = async (
@@ -1195,8 +1263,34 @@ const startNewVerification = async () => {
                                         </span>
                                       )}
                                     </div>
-                                    
-                                    {item.status_note && <p className="w-full col-span-2 text-red-500">Nota: {item.status_note}</p>}
+                                    <label className="flex flex-col gap-1 sm:col-span-2">
+                                      <span className="font-medium">Nota</span>
+                                      <input
+                                        type="text"
+                                        value={statusNoteDraftById[item.item_id] ?? item.status_note ?? ""}
+                                        onChange={(event) =>
+                                          setStatusNoteDraftById((prev) => ({
+                                            ...prev,
+                                            [item.item_id]: event.target.value,
+                                          }))
+                                        }
+                                        onBlur={() => updateStatusNote(item)}
+                                        onKeyDown={(event) => {
+                                          if (event.key === "Enter") {
+                                            event.currentTarget.blur();
+                                          }
+                                        }}
+                                        disabled={savingStatusNoteById[item.item_id]}
+                                        className="h-10 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
+                                        placeholder="Agregar una nota"
+                                        aria-label="Nota de estado"
+                                      />
+                                      {statusNoteErrorById[item.item_id] && (
+                                        <span className="text-sm text-red-500">
+                                          {statusNoteErrorById[item.item_id]}
+                                        </span>
+                                      )}
+                                    </label>
                                   </div>
                                 </div>
                               
