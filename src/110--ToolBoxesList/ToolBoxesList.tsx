@@ -17,6 +17,7 @@ const ToolBoxesList = () => {
     "Caja: 26-14": 4,
     "Caja: 26-15": 5,
     "Caja: 26-16": 6,
+    "Caja: 26-17": 7,
     "Caja: 26-19": 10,
     "Caja: 26-20": 20,
   }
