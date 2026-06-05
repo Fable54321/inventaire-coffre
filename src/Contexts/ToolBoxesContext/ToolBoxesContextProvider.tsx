@@ -15,6 +15,18 @@ interface ToolBoxesProviderProps {
   children: ReactNode;
 }
 
+const isCountableItem = (item: { expected_quantity?: number | null }) =>
+  (item.expected_quantity ?? 0) > 0;
+
+const getToolboxCheckSummary = (items: ToolboxInventoryItem[]): ToolboxCheckSummary => {
+  const countableItems = items.filter(isCountableItem);
+
+  return {
+    checked: countableItems.filter((item) => item.is_checked).length,
+    total: countableItems.length,
+  };
+};
+
 export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }) => {
   const [toolBoxes, setToolBoxes] = useState<ToolBox[]>([]);
   const [toolboxCheckSummaryById, setToolboxCheckSummaryById] = useState<Record<number, ToolboxCheckSummary>>({});
@@ -38,10 +50,7 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
 
           return [
             toolbox.id,
-            {
-              checked: items.filter((item) => item.is_checked).length,
-              total: items.length,
-            },
+            getToolboxCheckSummary(items),
           ] as const;
         }),
       );
@@ -166,14 +175,31 @@ const updateToolboxInventoryStatus = useCallback(
       const localUpdate = trackCheckedChange
         ? update
         : Object.fromEntries(
-            Object.entries(update).filter(([key]) => key !== 'is_checked'),
+            Object.entries(update).filter(
+              ([key, value]) => key !== 'is_checked' || value !== currentItem?.is_checked,
+            ),
           );
 
-      setToolboxItems((prev) =>
-        prev.map((item) =>
+      setToolboxItems((prev) => {
+        const nextItems = prev.map((item) =>
           item.item_id === itemId ? { ...item, ...localUpdate } : item,
-        ),
-      );
+        );
+
+        setToolboxCheckSummaryById((prevSummary) => {
+          const currentSummary = prevSummary[toolboxId];
+
+          if (!currentSummary) {
+            return prevSummary;
+          }
+
+          return {
+            ...prevSummary,
+            [toolboxId]: getToolboxCheckSummary(nextItems),
+          };
+        });
+
+        return nextItems;
+      });
     },
     [toolboxItems],
   );
@@ -202,8 +228,8 @@ const updateToolboxInventoryStatus = useCallback(
         return {
           ...prev,
           [toolboxId]: {
-            checked: currentSummary.checked + (item.is_checked ? 1 : 0),
-            total: currentSummary.total + 1,
+            checked: currentSummary.checked + (isCountableItem(item) && item.is_checked ? 1 : 0),
+            total: currentSummary.total + (isCountableItem(item) ? 1 : 0),
           },
         };
       });
