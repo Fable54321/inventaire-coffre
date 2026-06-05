@@ -580,6 +580,9 @@ const getGroupCheckedCount = (groupItems: typeof toolboxItems[number][]) =>
   const getGroupTotalCount = (groupItems: typeof toolboxItems[number][]) =>
   groupItems.filter(isCountableItem).length;
 
+  const getGroupInventoryCount = (groupItems: typeof toolboxItems[number][]) =>
+  groupItems.length;
+
 const getSectionCheckedCount = (section: typeof groupedItems[string]) =>
   Object.values(section.groups).reduce(
     (acc, group) => acc + getGroupCheckedCount(group.items),
@@ -591,6 +594,13 @@ const getSectionCheckedCount = (section: typeof groupedItems[string]) =>
     (acc, group) => acc + getGroupTotalCount(group.items),
     0,
   );
+
+ const getSectionInventoryCount = (section: typeof groupedItems[string]) =>
+  Object.values(section.groups).reduce(
+    (acc, group) => acc + getGroupInventoryCount(group.items),
+    0,
+  );
+
  const getCheckedCount = () =>
   toolboxItems.filter(
     (item) => isCountableItem(item) && checkedItems.has(item.item_id),
@@ -1006,6 +1016,9 @@ const startNewVerification = async () => {
                 <p className="flex items-center gap-4">
                   <span>Sección: {section.sectionName}</span>
                   <span>({getSectionCheckedCount(section)} / {getSectionTotalCount(section)})</span>
+                  <span className="rounded-md border border-secondary/20 bg-white px-2 py-0.5 text-[0.65em] font-bold text-secondary">
+                    total: {getSectionInventoryCount(section)}
+                  </span>
                 </p>
                
                 </div>
@@ -1076,9 +1089,12 @@ const startNewVerification = async () => {
                         <div className="flex min-w-0 flex-1 flex-col gap-2 ">
                         <div className="flex min-w-0 text-[0.8em] items-center gap-2 w-full">
                           <p className="min-w-0 max-w-[70%] flex-1">Grupo: {group.groupName}</p>
-                          <p className="shrink-0 whitespace-nowrap">
+<p className="shrink-0 whitespace-nowrap">
   ({getGroupCheckedCount(group.items)} / {getGroupTotalCount(group.items)})
 </p>
+                          <p className="shrink-0 whitespace-nowrap rounded-md border border-secondary/20 bg-white px-2 py-0.5 text-[0.8em] font-bold text-secondary">
+                            total: {getGroupInventoryCount(group.items)}
+                          </p>
                         </div>
                         <div className="flex text-[0.8em] items-center gap-3 ">
                           <p>{groupComplete ? "DESMARCAR TODO EL GRUPO :" : "MARCAR TODO EL GRUPO :"}</p>
