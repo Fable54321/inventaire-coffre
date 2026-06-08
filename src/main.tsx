@@ -10,6 +10,7 @@ import VehiclesList from './140--VehiclesList/VehiclesList'
 import ToolboxDetail from './120--ToolboxDetail/ToolboxDetail'
 import LastVerification from './130--LastVerification/LastVerification'
 import LastVehicleVerification from './150--LastVehicleVerification/LastVehicleVerification'
+import VehicleDetail from './160--VehicleDetail/VehicleDetail'
 import ProtectedRoute from './Components/ProtectedRoute'
 import { PersistentAuthProvider } from './Contexts/AuthContext/AuthContext'
 
@@ -45,6 +46,14 @@ const router = createBrowserRouter([
         <VehiclesList />
         </ProtectedRoute>
       ),
+      },
+      {
+        path: "vehiculos/:vehicleId",
+        element:( 
+          <ProtectedRoute>
+        <VehicleDetail />
+        </ProtectedRoute>
+        ),
       },
       {
         path: "toolbox/:toolboxId",

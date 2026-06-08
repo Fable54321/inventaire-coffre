@@ -34,7 +34,12 @@ const VehiclesList = () => {
                   </p>
                   <div className="flex flex-col gap-1">
                     <p className="text-[1.2em]">Usado por :</p>
-                    <p className="text-[2em] inline font-bold">{vehicle.name}</p>
+                    <Link
+                      to={`/vehiculos/${vehicle.id}`}
+                      className="text-[2em] inline font-bold underline decoration-secondary/40 underline-offset-4"
+                    >
+                      {vehicle.name}
+                    </Link>
                   </div>
                 </div>
 
