@@ -61,7 +61,13 @@ const VehiclesList = () => {
                   </p>
                 </div>
 
-                <ChevronRight className="text-secondary absolute right-4 top-1/2 transform -translate-y-1/2" strokeWidth={3} />
+                <Link
+                  to={`/vehiculos/${vehicle.id}`}
+                  aria-label={`Abrir inventario de ${vehicle.name}`}
+                  className="text-secondary absolute right-4 top-1/2 transform -translate-y-1/2"
+                >
+                  <ChevronRight strokeWidth={3} />
+                </Link>
               </div>
             </li>
           ))}
