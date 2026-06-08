@@ -21,7 +21,7 @@ function App() {
           Cajas
         </NavLink>
         <NavLink to="/vehiculos" className={({ isActive }) => `font-bold underline ${isActive ? "text-secondary" : ""}`}>
-          Vehiculos
+          Vehiculos y otros
         </NavLink>
       </div>
       <Outlet />
