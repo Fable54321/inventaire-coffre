@@ -940,7 +940,7 @@ const startNewVerification = async () => {
       <div className=" flex items-center justify-between ">
         <div className="flex flex-col gap-1">
           <h2 className="text-[3em] font-bold text-secondary">
-            {selectedVehicle ? `Vehiculo ${selectedVehicle.code}` : "Detalles del vehiculo"}
+            {selectedVehicle ? `Equipo ${selectedVehicle.code}` : "Detalles del equipo"}
           </h2>
           {selectedVehicle && <p className="text-[1.8em] font-bold text-muted">Usado por : {selectedVehicle.name}</p>}
           {selectedVehicle && <p className="text-[1.2em] font-bold text-muted">Última revisión: {selectedVehicle.verified_at ? (selectedVehicle.verified_at).slice(0, 10) : "-" }</p>}
@@ -983,7 +983,7 @@ const startNewVerification = async () => {
 
       {!vehicleItemsLoading &&  <button  className="flex items-center justify-center italic gap-2  underline font-bold mx-auto w-full my-18 text-[2.2em] text-secondary hover:cursor-pointer "
         onClick={() => {handleDoneChecking()}}>
-          He terminado de revisar este vehiculo
+          He terminado de revisar este equipo
           <ChevronsRight className="text-secondary text-[2em] " />
         </button>}
  
@@ -991,7 +991,7 @@ const startNewVerification = async () => {
       {vehicleItemsLoading && vehicleItems.length === 0 && <p>Cargando artículos...</p>}
       {vehicleItemsError && <p className="text-red-500">Error : {vehicleItemsError}</p>}
       {!vehicleItemsLoading && !vehicleItemsError && vehicleItems.length === 0 && (
-        <p>No se encontraron artículos para este vehiculo.</p>
+        <p>No se encontraron artículos para este equipo.</p>
       )}
       {!vehicleItemsLoading && !vehicleItemsError && showNonOkOnly && visibleVehicleItems.length === 0 && (
         <p className="text-lg font-semibold text-green-700">No hay herramientas con estado distinto de OK.</p>
@@ -1431,7 +1431,7 @@ const startNewVerification = async () => {
        { !vehicleItemsLoading && (
         <button  className="flex items-center justify-center italic gap-2  underline font-bold mx-auto w-full my-18 text-[2.2em] text-secondary hover:cursor-pointer "
           onClick={() => {handleDoneChecking()}}>
-            He terminado de revisar este vehiculo
+            He terminado de revisar este equipo
             <ChevronsRight className="text-secondary text-[2em] " />
           </button>
       )}

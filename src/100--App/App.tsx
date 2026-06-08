@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BriefcaseBusiness, Truck } from "lucide-react";
+import { BriefcaseBusiness, ClipboardList } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { usePersistentAuth } from "../Contexts/AuthContext/AuthContext";
 
@@ -41,8 +41,8 @@ function App() {
             }`
           }
         >
-          <Truck size={21} strokeWidth={2.5} />
-          <span>Vehiculos y otros</span>
+          <ClipboardList size={21} strokeWidth={2.5} />
+          <span>Equipos</span>
         </NavLink>
       </nav>
       <Outlet />

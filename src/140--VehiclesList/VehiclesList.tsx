@@ -1,4 +1,4 @@
-import { ChevronRight, Truck } from "lucide-react";
+import { ChevronRight, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useVehicles } from "../Contexts/VehiclesContext/UseVehicles";
 
@@ -10,7 +10,7 @@ const VehiclesList = () => {
       <div className="relative w-[min(750px,99%)] mx-auto my-4">
         <div className="h-0.5 w-20 bg-linear-to-l from-primary to-transparent absolute left-5 top-1/2 -translate-y-1/2"></div>
         <div className="h-0.5 w-20 bg-linear-to-r from-primary to-transparent absolute right-5 top-1/2 -translate-y-1/2"></div>
-        <h2 className="font-bold font-[inter] text-[2em] text-secondary text-center">Lista de vehiculos</h2>
+        <h2 className="font-bold font-[inter] text-[2em] text-secondary text-center">Lista de equipos</h2>
       </div>
 
       {loading && <p className="text-center">Cargando...</p>}
@@ -27,10 +27,10 @@ const VehiclesList = () => {
               >
                 <div className="flex gap-10 items-center justify-between w-[90%]">
                   <div className="p-3 rounded-lg bg-primary text-white">
-                    <Truck size={34} />
+                    <ClipboardList size={34} />
                   </div>
                   <p className="font-bold text-secondary text-[2.5em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">
-                    Vehiculo: {vehicle.code}
+                    Codigo: {vehicle.code}
                   </p>
                   <div className="flex flex-col gap-1">
                     <p className="text-[1.2em]">Usado por :</p>

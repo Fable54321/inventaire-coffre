@@ -105,7 +105,7 @@ if (isSignatureSent) {
     <div className="flex flex-col items-center gap-4">
         <div className=" flex flex-col items-center">
         <h3 className="text-2xl text-center font-bold text-secondary " >
-Confirmo que terminé de revisar el vehiculo el:</h3>
+Confirmo que termine de revisar este equipo el:</h3>
 <p className="font-bold text-[1.3em] text-secondary">{currentDateString}</p>
 </div>
 <div className="flex flex-col items-center">

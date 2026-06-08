@@ -24,7 +24,7 @@ const LastVehicleVerification = () => {
       {currentVehicle && (
         <div>
           <h2 className="font-bold font-[inter] text-[2em] text-secondary text-center">
-            Ultima revision del vehiculo: {currentVehicle.code}
+            Ultima revision del equipo: {currentVehicle.code}
           </h2>
           <h2 className="font-bold font-[inter] text-[2em] text-secondary text-center">
             usado por: {currentVehicle.name}
