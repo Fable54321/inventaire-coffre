@@ -30,7 +30,7 @@ const VehiclesList = () => {
                     <ClipboardList size={34} />
                   </div>
                   <p className="font-bold text-secondary text-[2.5em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">
-                    Codigo: {vehicle.code}
+                    {vehicle.code}
                   </p>
                   <div className="flex flex-col gap-1">
                     <p className="text-[1.2em]">Usado por :</p>
