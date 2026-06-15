@@ -58,6 +58,18 @@ export interface AddToolboxItemInput {
   is_checked?: boolean | null;
 }
 
+
+export interface ToolboxPicture {
+  id: number;
+  s3_key: string;
+  description: string | null;
+  equipment_name: string | null;
+  toolbox_id: number | null;
+  vehicle_id: number | null;
+  created_at: string;
+  signed_url: string;
+}
+
 export interface ToolboxGroup {
   id: number;
   section_id: number;
@@ -100,6 +112,10 @@ verificationLoading: boolean;
     toolboxId: number,
     signatureBase64: string,
   ) => Promise<{ signature_key: string }>;
+  toolboxPictures: ToolboxPicture[];
+toolboxPicturesLoading: boolean;
+toolboxPicturesError: string | null;
+fetchToolboxPictures: (toolboxId: number) => Promise<void>;
   updateToolboxItem: (
     toolboxId: number,
     itemId: number,
@@ -131,6 +147,7 @@ verificationLoading: boolean;
       name: string;
       position_order?: number | null;
     },
+    
   ) => Promise<ToolboxGroup>;
 
   loading: boolean;

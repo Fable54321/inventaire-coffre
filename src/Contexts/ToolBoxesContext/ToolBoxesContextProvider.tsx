@@ -9,6 +9,7 @@ import {
   type ToolboxInventoryItem,
   type ToolBoxesContextType,
   type ToolboxVerification,
+  type ToolboxPicture,
 } from './ToolBoxesContext';
 
 interface ToolBoxesProviderProps {
@@ -37,6 +38,9 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
   const [toolboxItemsError, setToolboxItemsError] = useState<string | null>(null);
   const [currentVerification, setCurrentVerification] = useState<ToolboxVerification | null>(null);
   const [verificationLoading, setVerificationLoading] = useState(false);
+  const [toolboxPictures, setToolboxPictures] = useState<ToolboxPicture[]>([]);
+const [toolboxPicturesLoading, setToolboxPicturesLoading] = useState(false);
+const [toolboxPicturesError, setToolboxPicturesError] = useState<string | null>(null);
 
   const fetchToolBoxes = useCallback(async () => {
     setLoading(true);
@@ -81,7 +85,28 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
     }
   }, []);
 
+const fetchToolboxPictures = useCallback(async (toolboxId: number) => {
+  setToolboxPicturesLoading(true);
+  setToolboxPicturesError(null);
 
+  try {
+    const pictures = await fetchWithAuth<ToolboxPicture[]>(
+      `/toolboxes/${toolboxId}/pictures`,
+    );
+
+    setToolboxPictures(pictures);
+  } catch (err) {
+    console.error(`Error al recuperar las fotos de la caja ${toolboxId} :`, err);
+
+    const message =
+      err instanceof Error ? err.message : 'Ocurrió un error desconocido';
+
+    setToolboxPicturesError(message);
+    throw err;
+  } finally {
+    setToolboxPicturesLoading(false);
+  }
+}, []);
 
 
   useEffect(() => {
@@ -329,6 +354,10 @@ const updateToolboxInventoryStatus = useCallback(
     toolboxItemsError,
     fetchToolBoxes,
     fetchToolboxItems,
+    toolboxPictures,
+toolboxPicturesLoading,
+toolboxPicturesError,
+fetchToolboxPictures,
     fetchVerification,
     currentVerification,
     updateToolboxInventoryStatus,
