@@ -29,17 +29,21 @@ const VehiclesList = () => {
                   <div className="p-3 rounded-lg bg-primary text-white">
                     <ClipboardList size={34} />
                   </div>
-                  <p className="font-bold text-secondary text-[2.5em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">
+                  <p className="flex-1 font-bold text-secondary text-[2.5em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">
                     {vehicle.code}
                   </p>
-                  <div className="flex flex-col gap-1">
+                 <div className="flex flex-col gap-1 min-w-20">
+                  {vehicle.name && (
+                    <>
                     <p className="text-[1.2em]">Usado por :</p>
                     <Link
                       to={`/vehiculos/${vehicle.id}`}
-                      className="text-[2em] inline font-bold underline decoration-secondary/40 underline-offset-4"
+                      className="text-[2em]  inline font-bold underline decoration-secondary/40 underline-offset-4"
                     >
                       {vehicle.name}
                     </Link>
+                    </>
+                  )}
                   </div>
                 </div>
 
@@ -61,13 +65,22 @@ const VehiclesList = () => {
                   </p>
                 </div>
 
-                <Link
+
+                    {!vehicle.name &&  <Link
+                  to={`/vehiculos/${vehicle.id}`}
+                  aria-label={`Abrir inventario de ${vehicle.name}`}
+                  className="text-secondary absolute right-4 top-1/2 transform -translate-y-1/2"
+                >
+                  <ChevronRight strokeWidth={3} size={50} />
+                </Link>}
+
+               {vehicle.name &&  <Link
                   to={`/vehiculos/${vehicle.id}`}
                   aria-label={`Abrir inventario de ${vehicle.name}`}
                   className="text-secondary absolute right-4 top-1/2 transform -translate-y-1/2"
                 >
                   <ChevronRight strokeWidth={3} />
-                </Link>
+                </Link>}
               </div>
             </li>
           ))}
