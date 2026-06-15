@@ -1,15 +1,27 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
 import { useEffect, useMemo } from "react";
 import type { ToolBox } from "../Contexts/ToolBoxesContext/ToolBoxesContext";
+import SinglePicture from "./SinglePicture";
 
 
 const ToolboxPictures = () => {
 
 
-const { toolboxId } = useParams();
+const { toolboxId, pictureId } = useParams();
+const navigate = useNavigate();
 
-const { fetchToolboxPictures, toolboxPictures, toolBoxes } = useToolBoxes();
+const {
+  fetchToolboxPictures,
+  fetchSinglePicture,
+  selectedPicture,
+  selectedPictureLoading,
+  selectedPictureError,
+  toolboxPictures,
+  toolboxPicturesLoading,
+  toolboxPicturesError,
+  toolBoxes,
+} = useToolBoxes();
 
 
 useEffect(() => {
@@ -20,8 +32,12 @@ useEffect(() => {
 
 
 useEffect(() => {
-    console.log(toolboxPictures);
-}, [toolboxPictures]);
+    if (toolboxId && pictureId) {
+        fetchSinglePicture(Number(toolboxId), Number(pictureId)).catch(() => {
+            // error is handled by context state
+        });
+    }
+}, [fetchSinglePicture, toolboxId, pictureId]);
 
 
 const selectedToolbox = useMemo(() => {
@@ -35,10 +51,13 @@ if (!toolBoxes || !toolboxId) return null;
   return (
     <article className="w-full flex flex-col items-center">
         <h2>Fotos de la caja {selectedToolbox?.code}</h2>
+        {toolboxPicturesLoading && <p className="mt-6 text-[1.3em] font-bold">Cargando fotos...</p>}
+        {toolboxPicturesError && <p className="mt-6 text-center font-bold text-red-600">{toolboxPicturesError}</p>}
+        {!toolboxPicturesLoading && !toolboxPicturesError && toolboxPictures.length === 0 && (
+          <p className="mt-6 text-[1.2em] font-bold">No se encontraron fotos para esta caja.</p>
+        )}
     <div className="mt-4 md:grid md:grid-cols-3 flex flex-col  items-center gap-2 gap-y-10 w-[min(750px,calc(100%-1rem))]" >
       {toolboxPictures.map((picture) => (
-        <>
-       
         <Link to={`/toolbox/${toolboxId}/pictures/${picture.id}`} key={picture.id} className="  mx-auto mt-0 mb-auto border border-b border-black/10 bg-[#f4fdf1] rounded-xl shadow-2xl">
         
         <div className="flex flex-col gap-3 relative">
@@ -47,11 +66,19 @@ if (!toolBoxes || !toolboxId) return null;
           </div>
           
         </Link>
-        </>
         
       ))}
 
     </div>
+    {pictureId && (
+      <SinglePicture
+        picture={selectedPicture}
+        loading={selectedPictureLoading}
+        error={selectedPictureError}
+        title={selectedPicture?.description || `Foto de la caja ${selectedToolbox?.code ?? ""}`}
+        onClose={() => navigate(`/toolbox/${toolboxId}/pictures`)}
+      />
+    )}
 </article>
   )
   

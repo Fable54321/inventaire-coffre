@@ -62,6 +62,17 @@ export interface VehicleVerification {
   completion_percentage: number;
 }
 
+export interface VehiclePicture {
+  id: number;
+  s3_key: string;
+  description: string | null;
+  equipment_name: string | null;
+  toolbox_id: number | null;
+  vehicle_id: number | null;
+  created_at: string;
+  signed_url: string;
+}
+
 export interface VehiclesContextType {
   vehicles: Vehicle[];
   vehicleCheckSummaryById: Record<number, VehicleCheckSummary>;
@@ -72,6 +83,14 @@ export interface VehiclesContextType {
   fetchVehicleItems: (vehicleId: number) => Promise<void>;
   fetchVehicleVerification: (vehicleId: number) => Promise<void>;
   currentVehicleVerification: VehicleVerification | null;
+  vehiclePictures: VehiclePicture[];
+  vehiclePicturesLoading: boolean;
+  vehiclePicturesError: string | null;
+  fetchVehiclePictures: (vehicleId: number) => Promise<void>;
+  selectedVehiclePicture: VehiclePicture | null;
+  selectedVehiclePictureLoading: boolean;
+  selectedVehiclePictureError: string | null;
+  fetchSingleVehiclePicture: (vehicleId: number, pictureId: number) => Promise<void>;
   updateVehicleInventoryStatus: (
     vehicleId: number,
     update: {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useVehicles } from "../Contexts/VehiclesContext/UseVehicles";
 import type { VehicleInventoryItem } from "../Contexts/VehiclesContext/VehiclesContext";
-import { ArrowLeftToLine, Check, CheckCheck, ChevronDown, ChevronsRight, GripVertical, Minus, Plus, ChevronUp, X } from "lucide-react";
+import { ArrowLeftToLine, Camera, Check, CheckCheck, ChevronDown, ChevronsRight, GripVertical, Minus, Plus, ChevronUp, X } from "lucide-react";
 import StartNewVerificationConfirmModal from "../120--ToolboxDetail/StartNewVerificationConfirmModal";
 import DoneCheckingConfirmModal from "./DoneCheckingConfirmModal";
 
@@ -974,7 +974,10 @@ const startNewVerification = async () => {
         
         
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex flex-col items-end gap-10">
+        <Link to={`/vehiculos/${vehicleId}/pictures`} className=" bg-secondary p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
+          <Camera size={50} strokeWidth={2} />
+        </Link>
         <Link to="/vehiculos" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
           <ArrowLeftToLine size={50} strokeWidth={2} />
         </Link>

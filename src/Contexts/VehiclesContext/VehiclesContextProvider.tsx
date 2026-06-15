@@ -7,6 +7,7 @@ import {
   type VehicleCheckSummary,
   type VehicleGroup,
   type VehicleInventoryItem,
+  type VehiclePicture,
   type VehicleVerification,
   type VehiclesContextType,
 } from "./VehiclesContext";
@@ -37,6 +38,12 @@ export const VehiclesProvider: React.FC<VehiclesProviderProps> = ({ children }) 
   const [vehicleItemsError, setVehicleItemsError] = useState<string | null>(null);
   const [currentVehicleVerification, setCurrentVehicleVerification] = useState<VehicleVerification | null>(null);
   const [vehicleVerificationLoading, setVehicleVerificationLoading] = useState(false);
+  const [vehiclePictures, setVehiclePictures] = useState<VehiclePicture[]>([]);
+  const [vehiclePicturesLoading, setVehiclePicturesLoading] = useState(false);
+  const [vehiclePicturesError, setVehiclePicturesError] = useState<string | null>(null);
+  const [selectedVehiclePicture, setSelectedVehiclePicture] = useState<VehiclePicture | null>(null);
+  const [selectedVehiclePictureLoading, setSelectedVehiclePictureLoading] = useState(false);
+  const [selectedVehiclePictureError, setSelectedVehiclePictureError] = useState<string | null>(null);
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
@@ -80,6 +87,40 @@ export const VehiclesProvider: React.FC<VehiclesProviderProps> = ({ children }) 
       throw err;
     } finally {
       setVehicleItemsLoading(false);
+    }
+  }, []);
+
+  const fetchVehiclePictures = useCallback(async (vehicleId: number) => {
+    setVehiclePicturesLoading(true);
+    setVehiclePicturesError(null);
+
+    try {
+      const pictures = await fetchWithAuth<VehiclePicture[]>(`/vehicles/${vehicleId}/pictures`);
+      setVehiclePictures(pictures);
+    } catch (err) {
+      console.error(`Error al recuperar las fotos del vehiculo ${vehicleId}:`, err);
+      const message = err instanceof Error ? err.message : "Ocurrio un error desconocido";
+      setVehiclePicturesError(message);
+      throw err;
+    } finally {
+      setVehiclePicturesLoading(false);
+    }
+  }, []);
+
+  const fetchSingleVehiclePicture = useCallback(async (vehicleId: number, pictureId: number) => {
+    setSelectedVehiclePictureLoading(true);
+    setSelectedVehiclePictureError(null);
+
+    try {
+      const picture = await fetchWithAuth<VehiclePicture>(`/vehicles/${vehicleId}/pictures/${pictureId}`);
+      setSelectedVehiclePicture(picture);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar la foto";
+      setSelectedVehiclePictureError(message);
+      setSelectedVehiclePicture(null);
+      throw err;
+    } finally {
+      setSelectedVehiclePictureLoading(false);
     }
   }, []);
 
@@ -324,6 +365,14 @@ export const VehiclesProvider: React.FC<VehiclesProviderProps> = ({ children }) 
     fetchVehicleItems,
     fetchVehicleVerification,
     currentVehicleVerification,
+    vehiclePictures,
+    vehiclePicturesLoading,
+    vehiclePicturesError,
+    fetchVehiclePictures,
+    selectedVehiclePicture,
+    selectedVehiclePictureLoading,
+    selectedVehiclePictureError,
+    fetchSingleVehiclePicture,
     updateVehicleInventoryStatus,
     uploadVehicleSignature,
     updateVehicleItem,

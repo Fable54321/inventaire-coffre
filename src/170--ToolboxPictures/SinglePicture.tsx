@@ -1,29 +1,61 @@
-import { useParams } from "react-router-dom";
-import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
+import { X } from "lucide-react";
 import { useEffect } from "react";
+import type { ToolboxPicture } from "../Contexts/ToolBoxesContext/ToolBoxesContext";
 
+interface SinglePictureProps {
+  picture: ToolboxPicture | null;
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+  title?: string;
+}
 
-const SinglePicture = () => {
+const SinglePicture = ({ picture, loading, error, onClose, title }: SinglePictureProps) => {
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
 
+    window.addEventListener("keydown", closeOnEscape);
 
-const { toolboxId, pictureId } = useParams();
-
-const { fetchSinglePicture, selectedPicture, selectedPictureLoading, selectedPictureError } = useToolBoxes();
-
-
-useEffect(() => {
-    if (toolboxId && pictureId) {
-        fetchSinglePicture(Number(toolboxId), Number(pictureId));
-    }
-}, [fetchSinglePicture, toolboxId, pictureId]);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
 
   return (
-    <article className="flex flex-col items-center mt-20 gap-4 bg-white py-8 shadow-2xl rounded-xl w-[min(650px,99%)] mx-auto my-4">
-        {selectedPictureLoading && <p>Cargando...</p>}
-        {selectedPictureError && <p>{selectedPictureError}</p>}
-        <img src={selectedPicture?.signed_url} alt="" />
-      
-    </article>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-3 py-6"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <article
+        className="relative flex max-h-[92vh] w-[min(900px,98%)] flex-col items-center gap-4 overflow-auto rounded-lg bg-white p-4 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-md bg-red-600 text-white shadow-md"
+          aria-label="Cerrar foto"
+          title="Cerrar foto"
+        >
+          <X size={28} />
+        </button>
+
+        {title && <h3 className="max-w-[calc(100%-4rem)] text-center text-[1.4em] font-bold text-secondary">{title}</h3>}
+        {loading && <p className="py-12 text-[1.4em] font-bold">Cargando...</p>}
+        {error && <p className="py-12 text-center text-[1.2em] font-bold text-red-600">{error}</p>}
+        {!loading && !error && picture && (
+          <img
+            className="max-h-[78vh] w-auto max-w-full rounded-md object-contain"
+            src={picture.signed_url}
+            alt={picture.description || title || "Foto"}
+          />
+        )}
+      </article>
+    </div>
   )
 }
 

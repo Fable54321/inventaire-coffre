@@ -14,7 +14,7 @@ import VehicleDetail from './160--VehicleDetail/VehicleDetail'
 import ProtectedRoute from './Components/ProtectedRoute'
 import { PersistentAuthProvider } from './Contexts/AuthContext/AuthContext'
 import ToolboxPictures from './170--ToolboxPictures/ToolboxPictures'
-import SinglePicture from './170--ToolboxPictures/SinglePicture'
+import VehiclePictures from './180--VehiclePictures/VehiclePictures'
 
 const router = createBrowserRouter([
   {
@@ -95,7 +95,23 @@ const router = createBrowserRouter([
     path: "/toolbox/:toolboxId/pictures/:pictureId",
     element: (
       <ProtectedRoute>
-    <SinglePicture />
+    <ToolboxPictures />
+    </ProtectedRoute>
+  )
+  },
+  {
+    path: "/vehiculos/:vehicleId/pictures",
+    element: (
+      <ProtectedRoute>
+    <VehiclePictures />
+    </ProtectedRoute>
+  )
+  },
+  {
+    path: "/vehiculos/:vehicleId/pictures/:pictureId",
+    element: (
+      <ProtectedRoute>
+    <VehiclePictures />
     </ProtectedRoute>
   )
   }
