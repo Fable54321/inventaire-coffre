@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type DragEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useToolBoxes } from "../Contexts/ToolBoxesContext/UseToolBoxes";
 import type { ToolboxInventoryItem } from "../Contexts/ToolBoxesContext/ToolBoxesContext";
-import { ArrowLeftToLine, Check, CheckCheck, ChevronDown, ChevronsRight, GripVertical, Minus, Plus, ChevronUp, X } from "lucide-react";
+import { ArrowLeftToLine, Check, CheckCheck, ChevronDown, ChevronsRight, GripVertical, Minus, Plus, ChevronUp, X, Camera } from "lucide-react";
 import StartNewVerificationConfirmModal from "./StartNewVerificationConfirmModal";
 import DoneCheckingConfirmModal from "./DoneCheckingConfirmModal";
 
@@ -848,7 +848,10 @@ const startNewVerification = async () => {
         
         
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex flex-col items-end gap-10">
+           <Link to={`/toolbox/${toolboxId}/pictures`} className=" bg-secondary p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
+          <Camera size={50} strokeWidth={2} />
+        </Link>
         <Link to="/" className=" bg-linear-to-t from-red-500 to-red-700 p-2 text-[2em] rounded-lg font-bold font-inter shadow-xl text-white">
           <ArrowLeftToLine size={50} strokeWidth={2} />
         </Link>
