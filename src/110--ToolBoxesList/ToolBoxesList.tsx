@@ -51,7 +51,7 @@ const ToolBoxesList = () => {
               <div className="p-1 px-2 rounded-lg bg-primary">
                 <img src={toolbox_icon} alt="Toolbox" className="w-10 h-10" />
               </div>
-              <p className="font-bold text-secondary text-[2.5em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">Caja: {toolbox.code}</p>
+              <p className="font-bold text-secondary flex-1 text-[2.5em] border-2 border-secondary/50 border-t-0 border-b-0 px-7 leading-none">Caja: {toolbox.code}</p>
               <div className="flex flex-col gap-1">
                 <p className="text-[1.2em] ">
                   Usado por : 
