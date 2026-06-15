@@ -32,13 +32,13 @@ const VehiclesList = () => {
                   <p className="min-w-0 font-bold text-secondary text-[clamp(1.65rem,8vw,2.5em)] border-2 border-secondary/50 border-t-0 border-b-0 px-5 leading-none max-[600px]:px-3">
                     {vehicle.code}
                   </p>
-                 <div className="flex min-w-0 flex-col gap-1 min-w-20 max-[600px]:col-span-2 max-[600px]:pl-1">
+                 <div className="flex min-w-0 flex-col gap-1 max-[600px]:col-span-2 max-[600px]:pl-1">
                   {vehicle.name && (
                     <>
                     <p className="text-[clamp(1rem,4vw,1.2em)]">Usado por :</p>
                     <Link
                       to={`/vehiculos/${vehicle.id}`}
-                      className="text-[clamp(1.35rem,6vw,2em)] inline font-bold underline decoration-secondary/40 underline-offset-4 break-words leading-tight"
+                      className="text-[clamp(1.35rem,6vw,2em)] inline font-bold underline decoration-secondary/40 underline-offset-4 wrap-break-word leading-tight"
                     >
                       {vehicle.name}
                     </Link>

@@ -56,7 +56,7 @@ const ToolBoxesList = () => {
                 <p className="text-[clamp(1rem,4vw,1.2em)]">
                   Usado por : 
                 </p>
-                <p className="text-[clamp(1.35rem,6vw,2em)] inline font-bold break-words leading-tight">{toolbox.name}</p>
+                <p className="text-[clamp(1.35rem,6vw,2em)] inline font-bold wrap-break-word leading-tight">{toolbox.name}</p>
                 </div>
                 </div>
                 <div className="flex flex-wrap justify-around gap-x-5 gap-y-2 w-full text-center max-[600px]:justify-start max-[600px]:text-left">
