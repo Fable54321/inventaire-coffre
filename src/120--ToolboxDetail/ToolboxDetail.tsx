@@ -24,8 +24,6 @@ const ToolboxDetail = () => {
     fetchToolboxItems,
     updateToolboxItem,
     reorderToolboxItems,
-    addToolboxItemToGroup,
-    addToolboxGroup,
     updateToolboxInventoryStatus,
     uploadToolboxSignature,
   } = useToolBoxes();
@@ -47,25 +45,13 @@ const ToolboxDetail = () => {
   const [showStartNewConfirmModal, setShowStartNewConfirmModal] = useState(false);
   const [startingNewVerification, setStartingNewVerification] = useState(false);
   const [showNonOkOnly, setShowNonOkOnly] = useState(false);
-  const [activeAddGroupKey, setActiveAddGroupKey] = useState<string | null>(null);
-  const [addToolDraft, setAddToolDraft] = useState({
-    raw_description: "",
-    expected_quantity: "1",
-    actual_quantity: "",
-    status: "OK",
-    status_note: "",
-  });
-  const [addingTool, setAddingTool] = useState(false);
-  const [addToolError, setAddToolError] = useState<string | null>(null);
-  const [activeAddGroupSectionKey, setActiveAddGroupSectionKey] = useState<string | null>(null);
-  const [addGroupName, setAddGroupName] = useState("");
-  const [addingGroup, setAddingGroup] = useState(false);
-  const [addGroupError, setAddGroupError] = useState<string | null>(null);
+
+ 
   const [reorderingItemsByGroupKey, setReorderingItemsByGroupKey] = useState<Record<string, boolean>>({});
   const [reorderErrorByGroupKey, setReorderErrorByGroupKey] = useState<Record<string, string>>({});
   const [draggedTool, setDraggedTool] = useState<{ groupKey: string; itemId: number } | null>(null);
   const [dragOverTool, setDragOverTool] = useState<{ groupKey: string; itemId: number } | null>(null);
-  const [createdGroupsBySectionKey, setCreatedGroupsBySectionKey] = useState<Record<string, GroupedToolboxGroup[]>>({});
+  const [createdGroupsBySectionKey,] = useState<Record<string, GroupedToolboxGroup[]>>({});
   const databaseCheckedItems = useMemo(
     () => new Set(toolboxItems.filter((item) => item.is_checked).map((item) => item.item_id)),
     [toolboxItems],
@@ -656,125 +642,13 @@ const allSectionsComplete = useMemo(() => {
     });
   };
 
-  const openAddToolForm = (groupKey: string) => {
-    setActiveAddGroupKey((currentGroupKey) => (currentGroupKey === groupKey ? null : groupKey));
-    setAddToolError(null);
-  };
 
-  const openAddGroupForm = (sectionKey: string) => {
-    setActiveAddGroupSectionKey((currentSectionKey) => (currentSectionKey === sectionKey ? null : sectionKey));
-    setAddGroupError(null);
-  };
 
-  const submitNewGroup = async (sectionKey: string, section: typeof groupedItems[string]) => {
-    if (!toolboxId) return;
+ 
 
-    const name = addGroupName.trim();
+ 
 
-    if (name === "") {
-      setAddGroupError("El nombre del grupo es obligatorio.");
-      return;
-    }
 
-    try {
-      setAddingGroup(true);
-      setAddGroupError(null);
-
-      const createdGroup = await addToolboxGroup(Number(toolboxId), section.sectionId, { name });
-      const groupKey = `${sectionKey}:${createdGroup.id}:${createdGroup.name}`;
-
-      setCreatedGroupsBySectionKey((prev) => ({
-        ...prev,
-        [sectionKey]: [
-          ...(prev[sectionKey] ?? []),
-          {
-            sectionId: createdGroup.section_id,
-            groupId: createdGroup.id,
-            groupName: createdGroup.name,
-            groupOrder: createdGroup.position_order,
-            items: [],
-          },
-        ],
-      }));
-      setOpenGroups((prev) => new Set(prev).add(groupKey));
-      setAddGroupName("");
-      setActiveAddGroupSectionKey(null);
-    } catch (error) {
-      console.error("Error adding toolbox group:", error);
-      setAddGroupError(error instanceof Error ? error.message : "No se pudo agregar el grupo.");
-    } finally {
-      setAddingGroup(false);
-    }
-  };
-
-  const submitNewTool = async (groupKey: string, group: GroupedToolboxGroup) => {
-    if (!toolboxId) return;
-
-    const rawDescription = addToolDraft.raw_description.trim();
-    const expectedQuantity = Number(addToolDraft.expected_quantity);
-    const actualQuantity =
-      addToolDraft.actual_quantity.trim() === "" ? null : Number(addToolDraft.actual_quantity);
-
-    if (rawDescription === "") {
-      setAddToolError("La descripcion es obligatoria.");
-      return;
-    }
-
-    if (!Number.isFinite(expectedQuantity) || expectedQuantity < 0) {
-      setAddToolError("La cantidad esperada debe ser 0 o más.");
-      return;
-    }
-
-    if (actualQuantity !== null && (!Number.isFinite(actualQuantity) || actualQuantity < 0)) {
-      setAddToolError("La cantidad real debe ser 0 o más.");
-      return;
-    }
-
-    try {
-      setAddingTool(true);
-      setAddToolError(null);
-
-      await addToolboxItemToGroup(
-        Number(toolboxId),
-        group.sectionId,
-        group.groupId,
-        {
-          raw_description: rawDescription,
-          expected_quantity: expectedQuantity,
-          actual_quantity: actualQuantity,
-          status: addToolDraft.status.trim() || null,
-          status_note: addToolDraft.status_note.trim() || null,
-          is_checked: false,
-        },
-      );
-
-      setAddToolDraft({
-        raw_description: "",
-        expected_quantity: "1",
-        actual_quantity: "",
-        status: "OK",
-        status_note: "",
-      });
-      setActiveAddGroupKey(null);
-      setOpenGroups((prev) => new Set(prev).add(groupKey));
-      if (group.groupId !== null) {
-        setCreatedGroupsBySectionKey((prev) => {
-          const next = { ...prev };
-
-          Object.entries(next).forEach(([sectionKey, createdGroups]) => {
-            next[sectionKey] = createdGroups.filter((createdGroup) => createdGroup.groupId !== group.groupId);
-          });
-
-          return next;
-        });
-      }
-    } catch (error) {
-      console.error("Error adding toolbox item:", error);
-      setAddToolError(error instanceof Error ? error.message : "No se pudo agregar la herramienta.");
-    } finally {
-      setAddingTool(false);
-    }
-  };
 
   const clearDraggedTool = () => {
     setDraggedTool(null);
@@ -1031,49 +905,7 @@ const startNewVerification = async () => {
 
             {sectionOpen && (
               <div className="space-y-3 p-4 rounded-b-lg" style={{ boxShadow: "0px 12px 24px 0px rgba(0,0,0,0.1)" }}>
-                <div className="rounded-lg border border-secondary/20 bg-white p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-[0.8em] font-bold text-secondary">Grupos de la seccion</p>
-                    <button
-                      type="button"
-                      onClick={() => openAddGroupForm(sectionKey)}
-                      title="Agregar grupo"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-secondary text-white shadow-md"
-                    >
-                      {activeAddGroupSectionKey === sectionKey ? <X size={24} /> : <Plus size={24} />}
-                    </button>
-                  </div>
-                  {activeAddGroupSectionKey === sectionKey && (
-                    <form
-                      className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        submitNewGroup(sectionKey, section);
-                      }}
-                    >
-                      <label className="flex flex-col gap-1 text-[0.7em] font-semibold text-secondary">
-                        Nombre del grupo
-                        <input
-                          type="text"
-                          value={addGroupName}
-                          onChange={(event) => setAddGroupName(event.target.value)}
-                          disabled={addingGroup}
-                          className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                          placeholder="Nuevo grupo"
-                        />
-                      </label>
-                      <button
-                        type="submit"
-                        disabled={addingGroup}
-                        className="mt-auto flex h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 text-[0.7em] font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <Plus size={20} />
-                        Agregar grupo
-                      </button>
-                      {addGroupError && <p className="text-[0.7em] font-semibold text-red-500 sm:col-span-2">{addGroupError}</p>}
-                    </form>
-                  )}
-                </div>
+              
                 {Object.entries(section.groups).map(([groupKey, group]) => {
                   const groupOpen = openGroups.has(groupKey);
                   const groupComplete = isGroupComplete(group.items);
@@ -1316,108 +1148,7 @@ const startNewVerification = async () => {
                               
                             </div>
                           ))}
-                          <div className="rounded-md border border-secondary/30 bg-white p-3 shadow-sm">
-                            <button
-                              type="button"
-                              onClick={() => openAddToolForm(groupKey)}
-                              title="Agregar herramienta al grupo"
-                              className="flex w-full items-center justify-center gap-2 rounded-md bg-secondary px-4 py-3 text-[0.8em] font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              {activeAddGroupKey === groupKey ? <X size={22} /> : <Plus size={22} />}
-                              {activeAddGroupKey === groupKey ? "Cancelar agregar herramienta" : "Agregar herramienta"}
-                            </button>
-
-                            {activeAddGroupKey === groupKey && (
-                              <form
-                                className="mt-3 grid gap-3 text-[0.75em]"
-                                onSubmit={(event) => {
-                                  event.preventDefault();
-                                  submitNewTool(groupKey, group);
-                                }}
-                              >
-                                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem]">
-                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
-                                    Herramienta
-                                    <input
-                                      type="text"
-                                      value={addToolDraft.raw_description}
-                                      onChange={(event) =>
-                                        setAddToolDraft((prev) => ({ ...prev, raw_description: event.target.value }))
-                                      }
-                                      disabled={addingTool}
-                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                      placeholder="Descripcion"
-                                    />
-                                  </label>
-                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
-                                    Esperada
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      inputMode="numeric"
-                                      value={addToolDraft.expected_quantity}
-                                      onChange={(event) =>
-                                        setAddToolDraft((prev) => ({ ...prev, expected_quantity: event.target.value }))
-                                      }
-                                      disabled={addingTool}
-                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                    />
-                                  </label>
-                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
-                                    Real
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      inputMode="numeric"
-                                      value={addToolDraft.actual_quantity}
-                                      onChange={(event) =>
-                                        setAddToolDraft((prev) => ({ ...prev, actual_quantity: event.target.value }))
-                                      }
-                                      disabled={addingTool}
-                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                      placeholder="-"
-                                    />
-                                  </label>
-                                </div>
-                                <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto]">
-                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
-                                    Estado
-                                    <input
-                                      type="text"
-                                      value={addToolDraft.status}
-                                      onChange={(event) =>
-                                        setAddToolDraft((prev) => ({ ...prev, status: event.target.value }))
-                                      }
-                                      disabled={addingTool}
-                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                    />
-                                  </label>
-                                  <label className="flex flex-col gap-1 font-semibold text-secondary">
-                                    Nota
-                                    <input
-                                      type="text"
-                                      value={addToolDraft.status_note}
-                                      onChange={(event) =>
-                                        setAddToolDraft((prev) => ({ ...prev, status_note: event.target.value }))
-                                      }
-                                      disabled={addingTool}
-                                      className="h-11 rounded-md border border-secondary/30 px-3 text-slate-800 outline-none focus:border-secondary disabled:opacity-60"
-                                      placeholder="Opcional"
-                                    />
-                                  </label>
-                                  <button
-                                    type="submit"
-                                    disabled={addingTool}
-                                    className="mt-auto flex h-11 items-center justify-center gap-2 rounded-md bg-secondary px-4 font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                                  >
-                                    <Plus size={20} />
-                                    Agregar
-                                  </button>
-                                </div>
-                                {addToolError && <p className="font-semibold text-red-500">{addToolError}</p>}
-                              </form>
-                            )}
-                          </div>
+                        
                         </div>
                       )}
                     </div>
