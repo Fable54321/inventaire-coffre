@@ -39,6 +39,9 @@ export const ToolBoxesProvider: React.FC<ToolBoxesProviderProps> = ({ children }
   const [currentVerification, setCurrentVerification] = useState<ToolboxVerification | null>(null);
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [toolboxPictures, setToolboxPictures] = useState<ToolboxPicture[]>([]);
+  const [selectedPicture, setSelectedPicture] = useState<ToolboxPicture | null>(null);
+  const [selectedPictureLoading, setSelectedPictureLoading] = useState(false);
+  const [selectedPictureError, setSelectedPictureError] = useState<string | null>(null);
 const [toolboxPicturesLoading, setToolboxPicturesLoading] = useState(false);
 const [toolboxPicturesError, setToolboxPicturesError] = useState<string | null>(null);
 
@@ -107,6 +110,34 @@ const fetchToolboxPictures = useCallback(async (toolboxId: number) => {
     setToolboxPicturesLoading(false);
   }
 }, []);
+
+const fetchSinglePicture = useCallback(
+  async (toolboxId: number, pictureId: number) => {
+    try {
+      setSelectedPictureLoading(true);
+      setSelectedPictureError(null);
+
+      const picture = await fetchWithAuth<ToolboxPicture>(
+        `/toolboxes/${toolboxId}/pictures/${pictureId}`,
+      );
+
+      setSelectedPicture(picture);
+
+      
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Erreur lors du chargement de la photo';
+
+      setSelectedPictureError(message);
+      setSelectedPicture(null);
+
+      throw err;
+    } finally {
+      setSelectedPictureLoading(false);
+    }
+  },
+  [],
+);
 
 
   useEffect(() => {
@@ -358,6 +389,10 @@ const updateToolboxInventoryStatus = useCallback(
 toolboxPicturesLoading,
 toolboxPicturesError,
 fetchToolboxPictures,
+fetchSinglePicture,
+selectedPictureLoading,
+selectedPictureError,
+selectedPicture,
     fetchVerification,
     currentVerification,
     updateToolboxInventoryStatus,

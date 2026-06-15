@@ -116,6 +116,10 @@ verificationLoading: boolean;
 toolboxPicturesLoading: boolean;
 toolboxPicturesError: string | null;
 fetchToolboxPictures: (toolboxId: number) => Promise<void>;
+selectedPicture: ToolboxPicture | null;
+selectedPictureLoading: boolean;
+selectedPictureError: string | null;
+fetchSinglePicture: (toolboxId: number, pictureId: number) => Promise<void>;
   updateToolboxItem: (
     toolboxId: number,
     itemId: number,
